@@ -323,6 +323,7 @@ export function relaxedikDemo() {
         vrControl = new VrControl({
             renderer,
             scene,
+            camera,
             relaxedIK,
             mouseControl,
             controlMapping

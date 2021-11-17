@@ -13,6 +13,7 @@ export class VrControl {
         this.relaxedIK = options.relaxedIK
         this.renderer = options.renderer
         this.scene = options.scene
+        this.camera = options.camera;
         this.intervalID = undefined;
         this.mouseControl = options.mouseControl
         this.controlMapping = options.controlMapping;
@@ -30,8 +31,11 @@ export class VrControl {
         const controllerModelFactory = new XRControllerModelFactory()
         this.model1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
         this.controllerGrip1.add(this.model1);
-
         this.scene.add( this.controllerGrip1 );
+
+        this.cameraGroup = new T.Group()
+        this.cameraGroup.add(this.camera)
+        this.scene.add(this.cameraGroup)
 
         this.select = this.select.bind(this);
         this.squeeze = this.squeeze.bind(this);
@@ -53,12 +57,21 @@ export class VrControl {
     }
 
     squeeze() {
-        if (Math.abs(Date.now() - this.lastSqueeze) > 300) {
+        if (Math.abs(Date.now() - this.lastSqueeze) < 300) {
             console.log('Reset robot pose')
             this.mouseControl.reset()
         } else {
-            this.renderer.xr.stereo = !this.renderer.xr.stereo
-            console.log('Stereo: ' +  this.renderer.xr.stereo)
+            // this.renderer.xr.stereo = !this.renderer.xr.stereo
+            // console.log('Stereo: ' +  this.renderer.xr.stereo)
+            let headPose = this.cameraGroup.matrixWorld.clone();
+            let handPose = this.controller1.matrixWorld.clone();
+            let relHandPose = headPose.clone().invert().multiply( handPose);
+            let newCamPose = window.robot.links.right_hand.matrixWorld.clone().multiply(relHandPose.clone().invert());
+            console.log(this.cameraGroup.matrixWorld);
+            this.cameraGroup.matrixWorld.copy( newCamPose);
+            console.log(this.cameraGroup.matrixWorld);
+
+            this.matrixWorldNeedsUpdate = true;
         }
         this.lastSqueeze = Date.now()
     }
