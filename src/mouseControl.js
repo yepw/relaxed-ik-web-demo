@@ -383,16 +383,16 @@ export class MouseControl {
                 let std = Math.sqrt(this.updateRates.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n);
                 let max = Math.max(...this.updateRates);
                 let min = Math.min(...this.updateRates);
-                console.log("Avg. update rate in the past 200 loops: M = " + mean.toFixed(3) + "Hz (SD = " + std.toFixed(3) + ") \n Max: " 
-                    + max.toFixed(3) + "Hz  Min: " + min.toFixed(3) + "Hz");
+                // console.log("Avg. update rate in the past 200 loops: M = " + mean.toFixed(3) + "Hz (SD = " + std.toFixed(3) + ") \n Max: " 
+                //     + max.toFixed(3) + "Hz  Min: " + min.toFixed(3) + "Hz");
 
                 n = this.relaxedIKRates.length;
                 mean = this.relaxedIKRates.reduce((a, b) => a + b) / n;
                 std = Math.sqrt(this.relaxedIKRates.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n);
                 max = Math.max(...this.relaxedIKRates);
                 min = Math.min(...this.relaxedIKRates);
-                console.log("Avg. RelaxedIK rate in the past 200 loops: M = " + mean.toFixed(3) + "Hz (SD = " + std.toFixed(3) + ") \n Max: " 
-                + max.toFixed(3) + "Hz  Min: " + min.toFixed(3) + "Hz");
+                // console.log("Avg. RelaxedIK rate in the past 200 loops: M = " + mean.toFixed(3) + "Hz (SD = " + std.toFixed(3) + ") \n Max: " 
+                // + max.toFixed(3) + "Hz  Min: " + min.toFixed(3) + "Hz");
 
                 this.updateRates = [];
                 this.relaxedIKRates = [];

@@ -37,7 +37,7 @@ export function relaxedikDemo() {
     let vrControl = undefined;
     let jointSliders = [];
 
-    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/726b6a528d9ea969a90793b81c3c7f74da9be28f/sawyer_description/urdf/sawyer.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
         loadRobot(URL.createObjectURL(blob))
     });
 
@@ -203,11 +203,11 @@ export function relaxedikDemo() {
         manager.onLoad = () => {
             scene.add(window.robot);
             window.robot.rotation.x = -Math.PI / 2;
-            window.robot.position.y = 1.05;
+            window.robot.position.y = .05;
             window.robot.position.x = .1;
-            window.robot.scale.x = 1.15;
-            window.robot.scale.y = 1.15;
-            window.robot.scale.z = 1.15;
+            // window.robot.scale.x = 1.15;
+            // window.robot.scale.y = 1.15;
+            // window.robot.scale.z = 1.15;
             window.robot.traverse(c => {
                 c.castShadow = true;
                 if (c.material) {
@@ -342,6 +342,8 @@ export function relaxedikDemo() {
     renderer.setAnimationLoop( function () {
 
         renderer.render( scene, camera );
+        if (vrControl)
+            vrControl.update();
     
     } );
     

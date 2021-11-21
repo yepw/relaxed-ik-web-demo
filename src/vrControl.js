@@ -1,5 +1,5 @@
 /**
- * @author William Cong 
+ * @author William Cong
  */
 
 import * as T from 'three';
@@ -20,28 +20,33 @@ export class VrControl {
         this.scale = 20000
 
         this.lastSqueeze = 0;
+        this.lastTouchpad = 0
         this.defaultPosition = new T.Vector3();
         this.defaultPosition.set(1.5, 1.5, 0)
-1
+
         // toggles robot control
         this.controlMode = false;
 
-        this.controller1 = this.renderer.xr.getController(0); 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
         const controllerModelFactory = new XRControllerModelFactory()
         this.model1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
         this.controllerGrip1.add(this.model1);
-        this.scene.add( this.controllerGrip1 );
 
-        this.cameraGroup = new T.Group()
-        this.cameraGroup.add(this.camera)
-        this.scene.add(this.cameraGroup)
+        this.userGroup = new T.Group();
+        this.userGroup.name = "user_group";
+        this.userGroup.add(this.camera);
+        this.userGroup.add(this.controllerGrip1);
+        this.scene.add(this.userGroup);
 
         this.select = this.select.bind(this);
         this.squeeze = this.squeeze.bind(this);
 
-        this.controller1.addEventListener('select', this.select.bind(this));
-        this.controller1.addEventListener('squeeze', this.squeeze.bind(this))
+        this.controllerGrip1.addEventListener('select', this.select.bind(this));
+        this.controllerGrip1.addEventListener('squeeze', this.squeeze.bind(this));
+        let that = this;
+        this.controllerGrip1.addEventListener('connected', (e) => {
+            that.vive_buttons = e.data.gamepad;
+        })
 
         let stereoToggle = document.querySelector('#stereo-toggle');
         stereoToggle.addEventListener('click', (e) => {
@@ -53,25 +58,18 @@ export class VrControl {
             this.renderer.xr.parallax = e.target.checked;
             this.renderer.xr.defaultPosition = this.defaultPosition;
         })
-        
+
+        let axesHelper = new T.AxesHelper(5);
+        window.robot.links.right_hand.add(axesHelper);
     }
 
     squeeze() {
-        if (Math.abs(Date.now() - this.lastSqueeze) < 300) {
+        if (Math.abs(Date.now() - this.lastSqueeze) > 300) {
             console.log('Reset robot pose')
             this.mouseControl.reset()
         } else {
-            // this.renderer.xr.stereo = !this.renderer.xr.stereo
-            // console.log('Stereo: ' +  this.renderer.xr.stereo)
-            let headPose = this.cameraGroup.matrixWorld.clone();
-            let handPose = this.controller1.matrixWorld.clone();
-            let relHandPose = headPose.clone().invert().multiply( handPose);
-            let newCamPose = window.robot.links.right_hand.matrixWorld.clone().multiply(relHandPose.clone().invert());
-            console.log(this.cameraGroup.matrixWorld);
-            this.cameraGroup.matrixWorld.copy( newCamPose);
-            console.log(this.cameraGroup.matrixWorld);
-
-            this.matrixWorldNeedsUpdate = true;
+            this.renderer.xr.stereo = !this.renderer.xr.stereo;
+            console.log('Stereo: ' +  this.renderer.xr.stereo);
         }
         this.lastSqueeze = Date.now()
     }
@@ -80,11 +78,12 @@ export class VrControl {
         if (this.controlMode) {
             this.controlMode = false;
             clearInterval(this.intervalID);
+
         } else {
             this.controlMode = true;
-            let prev = this.getPose(this.controller1)
+            let prev = this.getPose(this.controllerGrip1)
             this.intervalID = setInterval(() => {
-                let curr = this.getPose(this.controller1)
+                let curr = this.getPose(this.controllerGrip1)
 
                 let x = (curr.x - prev.x) * this.scale
                 let y = (curr.y - prev.y) * (this.scale / 370)
@@ -96,9 +95,9 @@ export class VrControl {
 
                 // in world space, y is up; in robot space, z is up
                 this.mouseControl.onControllerMove(x, z, y, r)
-                
+
                 prev = curr
-            }, 5); 
+            }, 5);
         }
     }
 
@@ -106,11 +105,39 @@ export class VrControl {
         let controllerPos = controller.getWorldPosition(new T.Vector3())
         let controllerOri = controller.getWorldQuaternion(new T.Quaternion())
         return {
-            x: controllerPos.x, 
+            x: controllerPos.x,
             y: controllerPos.y,
             z: controllerPos.z,
             r: controllerOri
-        } 
+        }
+    }
+
+    update() {
+        // controllers not detected
+        if (!this.vive_buttons) return;
+
+        // https://stackoverflow.com/questions/62476426/webxr-controllers-for-button-pressing-in-three-js
+	    //determine if we are in an xr session
+        if (this.renderer.xr.getSession()) {
+            if (this.vive_buttons.buttons[2].pressed){
+                if (Math.abs(Date.now() - this.lastSqueeze) > 100) {
+                    let eyePose = this.camera.matrixWorld.clone();
+                    let userPose = this.userGroup.matrixWorld.clone();
+                    let handPose = this.controllerGrip1.matrixWorld.clone();
+                    let relHandPose = userPose.clone().invert().multiply( handPose);
+                    let eePose = window.robot.links.right_hand.matrixWorld.clone();
+                    let eeToViveOffset = new T.Matrix4().makeRotationFromEuler(
+                        new T.Euler(0., -1.57079632679, 1.57079632679)
+                    );
+                    let newUserGroupPose = eePose.clone().multiply(eeToViveOffset).multiply(relHandPose.clone().invert());
+               
+                    this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
+                    this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
+
+                }
+                this.lastTouchpad = Date.now()
+            }
+        }
     }
 }
 
