@@ -4,6 +4,7 @@
 
 import * as T from 'three';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
+import { XRHandModelFactory  } from 'three/examples/jsm/webxr/XRHandModelFactory.js';
 // import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3 } from './utils';
 
 
@@ -28,14 +29,18 @@ export class VrControl {
         this.controlMode = false;
 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
-        const controllerModelFactory = new XRControllerModelFactory()
+        const controllerModelFactory = new XRControllerModelFactory();
         this.model1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
-        this.controllerGrip1.add(this.model1);
+
+        this.hand1 = this.renderer.xr.getHand( 0 );
+        const handModelFactory = new XRHandModelFactory();
+        this.handModel1 = handModelFactory.createHandModel(this.hand1);
 
         this.userGroup = new T.Group();
         this.userGroup.name = "user_group";
         this.userGroup.add(this.camera);
         this.userGroup.add(this.controllerGrip1);
+        this.userGroup.add(this.hand1);
         this.scene.add(this.userGroup);
 
         this.select = this.select.bind(this);
@@ -47,6 +52,27 @@ export class VrControl {
         this.controllerGrip1.addEventListener('connected', (e) => {
             that.vive_buttons = e.data.gamepad;
         })
+
+        let controllerVisSelect = document.querySelector('#controller-vis-select');
+        controllerVisSelect.onchange = (user_change) => {
+            switch (controllerVisSelect.value) {
+                case 'None':
+                    this.controllerGrip1.remove(this.model1);
+                    this.hand1.remove(this.handModel1);
+                    break;
+                case 'Hand (Not working)':
+                    this.controllerGrip1.remove(this.model1);
+                    this.hand1.add(this.handModel1);
+                    break;
+                case 'Controller':
+                default:
+                    this.controllerGrip1.add(this.model1);
+                    this.hand1.remove(this.handModel1);
+            }
+        }
+        
+        controllerVisSelect.value = "Controller";
+        controllerVisSelect.onchange();
 
         let stereoToggle = document.querySelector('#stereo-toggle');
         stereoToggle.addEventListener('click', (e) => {
@@ -120,7 +146,10 @@ export class VrControl {
 	    //determine if we are in an xr session
         if (this.renderer.xr.getSession()) {
             if (this.vive_buttons.buttons[2].pressed){
-                if (Math.abs(Date.now() - this.lastSqueeze) > 100) {
+                if (Math.abs(Date.now() - this.lastSqueeze) > 50) {
+                    this.controlMode = false;
+                    clearInterval(this.intervalID);
+
                     let eyePose = this.camera.matrixWorld.clone();
                     let userPose = this.userGroup.matrixWorld.clone();
                     let handPose = this.controllerGrip1.matrixWorld.clone();
