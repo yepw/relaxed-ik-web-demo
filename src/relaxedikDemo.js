@@ -69,6 +69,7 @@ export function relaxedikDemo() {
     createText("VR Options:", "inputs", "h3");
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
+    createToggleSwitch ("re-ground", "inputs", "6 DoF", "4 DoF", true);
     createSelect("controller-vis", "Controller Visualization", "inputs", ['None', 'Controller', 'Hand (Not working)']);
 
     createBr("inputs");
@@ -248,7 +249,10 @@ export function relaxedikDemo() {
         });
         manager.onLoad = () => {
             scene.add(window.kitchenStatic);
-            kitchenTransformation(window.kitchenStatic)
+            kitchenTransformation(window.kitchenStatic);
+            window.kitchenStatic.scale.x = 0.87;
+            window.kitchenStatic.scale.y = 0.87;
+            window.kitchenStatic.scale.z = 0.87;
         }
     }
 
@@ -260,8 +264,11 @@ export function relaxedikDemo() {
         });
         manager.onLoad = () => {
             scene.add(window.kitchenStandard);
-            kitchenTransformation(window.kitchenStandard)
-            window.kitchenStandard.position.y = 0.92
+            kitchenTransformation(window.kitchenStandard);
+            window.kitchenStandard.position.y = 0.8
+            window.kitchenStandard.scale.x = 0.87;
+            window.kitchenStandard.scale.y = 0.87;
+            window.kitchenStandard.scale.z = 0.87;
         }
     }
 
@@ -273,7 +280,10 @@ export function relaxedikDemo() {
         });
         manager.onLoad = () => {
             scene.add(window.kitchenDynamic);
-            kitchenTransformation(window.kitchenDynamic)
+            kitchenTransformation(window.kitchenDynamic);
+            window.kitchenDynamic.scale.x = 0.87;
+            window.kitchenDynamic.scale.y = 0.87;
+            window.kitchenDynamic.scale.z = 0.87;
         }
 
     }

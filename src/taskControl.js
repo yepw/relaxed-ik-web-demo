@@ -12,15 +12,15 @@ export class TaskControl {
         this.study = new PickAndPlaceBricksTabletop({ scene: this.scene });
         this.camera = options.camera;
 
-        const TABLE_HEIGHT = 1.07;
+        const TABLE_HEIGHT = 0.92;
 
         // 2D array to support multiple bricks/targets in a round
         this.rounds = [
             [
                 new Brick({
-                    init_posi: new T.Vector3(1, TABLE_HEIGHT + 0.02, 0.2),
+                    init_posi: new T.Vector3(0.8, TABLE_HEIGHT + 0.02, 0.2),
                     init_angle: 0,
-                    target_posi: new T.Vector3(0.7, TABLE_HEIGHT, 0.75),
+                    target_posi: new T.Vector3(0.5, TABLE_HEIGHT, 0.75),
                     color: 0xFF0000,
                     target_object: "circle",
                     scene: this.scene
@@ -28,9 +28,9 @@ export class TaskControl {
             ],
             [
                 new Brick({ 
-                    init_posi: new T.Vector3(0.8, TABLE_HEIGHT + 0.02, 0.5), 
+                    init_posi: new T.Vector3(0.6, TABLE_HEIGHT + 0.02, 0.5), 
                     init_angle: 0, 
-                    target_posi: new T.Vector3(1, TABLE_HEIGHT, -0.5), 
+                    target_posi: new T.Vector3(0.8, TABLE_HEIGHT, -0.5), 
                     color: 0xdddd88, 
                     target_object: "circle",
                     scene: this.scene
@@ -38,7 +38,7 @@ export class TaskControl {
             ], 
             [
                 new Brick({
-                    init_posi: new T.Vector3(1, TABLE_HEIGHT + 0.02, -0.75), 
+                    init_posi: new T.Vector3(0.8, TABLE_HEIGHT + 0.02, -0.75), 
                     init_angle: 0, 
                     target_posi: new T.Vector3(0.5, TABLE_HEIGHT, 0.5), 
                     color: 0xFF0000, 

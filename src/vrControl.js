@@ -27,6 +27,7 @@ export class VrControl {
 
         // toggles robot control
         this.controlMode = false;
+        this.reGround4DoF = true;
 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
         const controllerModelFactory = new XRControllerModelFactory();
@@ -85,8 +86,13 @@ export class VrControl {
             this.renderer.xr.defaultPosition = this.defaultPosition;
         })
 
+        let reGroundToggle = document.querySelector('#re-ground-toggle');
+        reGroundToggle.addEventListener('click', (e) => {
+            this.reGround4DoF = e.target.checked;
+        })
+
         let axesHelper = new T.AxesHelper(5);
-        window.robot.links.right_hand.add(axesHelper);
+        this.userGroup.add(axesHelper);
     }
 
     squeeze() {
@@ -149,19 +155,36 @@ export class VrControl {
                 if (Math.abs(Date.now() - this.lastSqueeze) > 50) {
                     this.controlMode = false;
                     clearInterval(this.intervalID);
+                    if (this.reGround4DoF) {
+                        let eyePose = this.camera.matrixWorld.clone();
+                        let userPose = this.userGroup.matrixWorld.clone();
+                        let handPose = this.controllerGrip1.matrixWorld.clone();
+                        let relHandPose = userPose.clone().invert().multiply( handPose);
+                        let eePosi = new T.Vector3().setFromMatrixPosition(window.robot.links.right_hand.matrixWorld);
+                        
+                        let targetPose = new T.Matrix4().compose(eePosi, new T.Quaternion().setFromRotationMatrix(handPose), new T.Vector3(1., 1., 1.));
+                        let newUserGroupPose = targetPose.clone().multiply(relHandPose.clone().invert());
+                   
+                        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
+                        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
 
-                    let eyePose = this.camera.matrixWorld.clone();
-                    let userPose = this.userGroup.matrixWorld.clone();
-                    let handPose = this.controllerGrip1.matrixWorld.clone();
-                    let relHandPose = userPose.clone().invert().multiply( handPose);
-                    let eePose = window.robot.links.right_hand.matrixWorld.clone();
-                    let eeToViveOffset = new T.Matrix4().makeRotationFromEuler(
-                        new T.Euler(0., -1.57079632679, 1.57079632679)
-                    );
-                    let newUserGroupPose = eePose.clone().multiply(eeToViveOffset).multiply(relHandPose.clone().invert());
-               
-                    this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
-                    this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
+                    } else { 
+                        // 6DoF reground
+                        let eyePose = this.camera.matrixWorld.clone();
+                        let userPose = this.userGroup.matrixWorld.clone();
+                        let handPose = this.controllerGrip1.matrixWorld.clone();
+                        let relHandPose = userPose.clone().invert().multiply( handPose);
+                        let eePose = window.robot.links.right_hand.matrixWorld.clone();
+                        let eeToViveOffset = new T.Matrix4().makeRotationFromEuler(
+                            new T.Euler(0., -1.57079632679, 1.57079632679)
+                        );
+                        let newUserGroupPose = eePose.clone().multiply(eeToViveOffset).multiply(relHandPose.clone().invert());
+                        
+                        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
+                        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
+
+                    }
+                   
 
                 }
                 this.lastTouchpad = Date.now()
