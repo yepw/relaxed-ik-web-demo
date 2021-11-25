@@ -92,7 +92,7 @@ export class VrControl {
         })
 
         let axesHelper = new T.AxesHelper(5);
-        this.userGroup.add(axesHelper);
+        window.robot.links.right_hand.add(axesHelper);
     }
 
     squeeze() {

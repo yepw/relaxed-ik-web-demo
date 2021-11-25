@@ -1,3 +1,0 @@
-result_topic: "result"
-params_topic: "parameters"
-rate: {{ros.rate}}
