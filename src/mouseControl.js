@@ -368,17 +368,13 @@ export class MouseControl {
         if ( d > 1e-3 || a > 1e-3 ) {
             let before = performance.now();
 
-            let eeForward = new T.Vector3();
-            window.robot.links.right_hand.matrixWorld.extractBasis(new T.Vector3(), new T.Vector3(), eeForward);
-            eeForward.applyMatrix4(this.T_ROS_to_THREE.clone())
-            console.log(eeForward);
             let res = this.relaxedIK.solve ([
                     ee_goal_rel_ros.posi.x,
                     ee_goal_rel_ros.posi.y,
                     ee_goal_rel_ros.posi.z],
                     [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
-                    3,
-                    [eeForward.x, eeForward.y, eeForward.z]);
+                    2,
+                    [0., 0., 1.]);
             
             let after = performance.now();
             this.relaxedIKRates.push( 1000.0 / (after - before))
