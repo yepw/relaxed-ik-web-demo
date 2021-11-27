@@ -2,7 +2,7 @@
  * @author Yeping Wang 
  */
 
-import { atan } from 'mathjs';
+import { atan, e } from 'mathjs';
 import * as T from 'three';
 import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3, rotQuaternion, changeReferenceFrame, quaternionToAxisAngle } from './utils';
 
@@ -30,13 +30,14 @@ export class MouseControl {
                                 "ori": new T.Quaternion().identity()};
         
         // transformation from ROS' reference frame to THREE's reference frame
-        this.T_ROS_to_THREE = new T.Matrix4().makeRotationFromEuler(new T.Euler(1.57079632679, 0., 0.));
+        this.T_ROS_to_THREE = new T.Matrix4().makeRotationFromEuler(new T.Euler(Math.PI/2, 0., 0.));
         // transformation from THREE' reference frame to ROS's reference frame
         this.T_THREE_to_ROS= this.T_ROS_to_THREE.clone().invert();
 
         this.pointer_locked = false;
         this.isRotate = false;
         this.moveCursorNotRobot = true;
+        this.rel_rot = true;
 
         this.canvas = document.getElementById('mouse-control-canvas');
 
@@ -306,24 +307,33 @@ export class MouseControl {
         }
     }
 
-    onControllerMove(x, y, z, r) {
+    onControllerMove(x, y, z, r, rel_rot = true) {
         // if (!this.moveCursorNotRobot) {
         //     let curr_ee_abs_three =  getCurrEEpose();
         //     let curr_ee_rel_three = this.absToRel(curr_ee_abs_three, this.init_ee_abs_three);
         //     this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, this.T_ROS_to_THREE);
         // } 
-        let worldToRobot = new T.Matrix4()
-        worldToRobot.set(1, 0,  0, 0, 0, 0, -1, 0, 0, 1,  0, 0, 0, 0,  0, 1);
-
-        let robot_r = rotQuaternion(r, worldToRobot);
-
+        this.rel_rot = rel_rot;
         let step = mathjsMatToThreejsVector3( 
                         this.controlMapping.transform([
                             y * this.moveTransScale,
                             x * this.moveTransScale, 
                             z * this.wheelTransScale]));
+        if (this.rel_rot) {
+            let worldToRobot = new T.Matrix4()
+            worldToRobot.set(1, 0,  0, 0, 0, 0, -1, 0, 0, 1,  0, 0, 0, 0,  0, 1);
 
-        this.ee_goal_rel_ros.ori.premultiply(robot_r)
+            let robot_r = rotQuaternion(r, worldToRobot);
+
+            this.ee_goal_rel_ros.ori.premultiply(robot_r)
+        } else { 
+            let ee_rel_goal_ros = changeReferenceFrame({"posi": new T.Vector3(), "ori": r.clone()}, this.T_ROS_to_THREE);
+            
+            // for contoller, z is pointing back; for end-effector, z is pointing forward
+            let r_updated = ee_rel_goal_ros.ori.clone().multiply( new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2, 0., -Math.PI/2)));
+            this.ee_goal_rel_ros.ori = r_updated;
+        }
+
         this.ee_goal_rel_ros.posi.add( step );
     }
 
@@ -367,14 +377,28 @@ export class MouseControl {
 
         if ( d > 1e-3 || a > 1e-3 ) {
             let before = performance.now();
-
-            let res = this.relaxedIK.solve ([
+            let res;
+            if (this.rel_rot) {
+                res = this.relaxedIK.solve ([
+                        ee_goal_rel_ros.posi.x,
+                        ee_goal_rel_ros.posi.y,
+                        ee_goal_rel_ros.posi.z],
+                        [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
+                        3,
+                        [0., 0., 1.],
+                        true,
+                        true);
+            } else {
+                res = this.relaxedIK.solve ([
                     ee_goal_rel_ros.posi.x,
                     ee_goal_rel_ros.posi.y,
                     ee_goal_rel_ros.posi.z],
                     [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
                     2,
-                    [0., 0., 1.]);
+                    [0., 0., 1.],
+                    true,
+                    false);
+            }
             
             let after = performance.now();
             this.relaxedIKRates.push( 1000.0 / (after - before))

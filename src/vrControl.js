@@ -30,6 +30,9 @@ export class VrControl {
         this.controlMode = false;
         this.reGround4DoF = true;
 
+        // if true, send relative rotation (velocity) commend to relaxedik
+        this.rel_rot = false;
+
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
         const controllerModelFactory = new XRControllerModelFactory();
         this.controllerModel1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
@@ -105,6 +108,8 @@ export class VrControl {
 
         let axesHelper = new T.AxesHelper(5);
         window.robot.links.right_hand.add(axesHelper);
+        let axesHelper2 = new T.AxesHelper(5);
+        this.controllerGrip1.add(axesHelper2);
     }
 
     squeeze() {
@@ -126,19 +131,25 @@ export class VrControl {
         } else {
             this.controlMode = true;
             let prev = this.getPose(this.controllerGrip1)
+
             this.intervalID = setInterval(() => {
                 let curr = this.getPose(this.controllerGrip1)
 
                 let x = (curr.x - prev.x) * this.scale
                 let y = (curr.y - prev.y) * (this.scale / 370)
                 let z = (curr.z - prev.z) * this.scale
+
                 let r = new T.Quaternion();
-                let q1 = prev.r.clone()
-                let q2 = curr.r.clone()
-                r.multiplyQuaternions(q2, q1.invert())
+                if (this.rel_rot) {
+                    let q1 = prev.r.clone()
+                    let q2 = curr.r.clone()
+                    r.multiplyQuaternions(q2, q1.invert())
+                } else {
+                    r = curr.r.clone();
+                }
 
                 // in world space, y is up; in robot space, z is up
-                this.mouseControl.onControllerMove(x, z, y, r)
+                this.mouseControl.onControllerMove(x, z, y, r, this.rel_rot)
 
                 prev = curr
             }, 5);
