@@ -5,6 +5,7 @@
 import * as T from 'three';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 import { XRHandModelFactory  } from 'three/examples/jsm/webxr/XRHandModelFactory.js';
+import { XRMarkerModelFactory  } from './XRMarkerModelFactory';
 // import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3 } from './utils';
 
 
@@ -31,11 +32,14 @@ export class VrControl {
 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
         const controllerModelFactory = new XRControllerModelFactory();
-        this.model1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
+        this.controllerModel1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
 
         this.hand1 = this.renderer.xr.getHand( 0 );
         const handModelFactory = new XRHandModelFactory();
         this.handModel1 = handModelFactory.createHandModel(this.hand1);
+        
+        const markerModelFactory = new XRMarkerModelFactory();
+        this.markerModel1 = markerModelFactory.createMarkerModel(this.controllerGrip1);
 
         this.userGroup = new T.Group();
         this.userGroup.name = "user_group";
@@ -58,16 +62,24 @@ export class VrControl {
         controllerVisSelect.onchange = (user_change) => {
             switch (controllerVisSelect.value) {
                 case 'None':
-                    this.controllerGrip1.remove(this.model1);
+                    this.controllerGrip1.remove(this.controllerModel1);
+                    this.controllerGrip1.remove(this.markerModel1);
                     this.hand1.remove(this.handModel1);
                     break;
-                case 'Hand (Not working)':
-                    this.controllerGrip1.remove(this.model1);
+                case 'Pen':
+                    this.controllerGrip1.remove(this.controllerModel1);
+                    this.controllerGrip1.add(this.markerModel1);
+                    this.hand1.remove(this.handModel1);
+                    break;
+                case 'Hand (Not working on Vive)':
+                    this.controllerGrip1.remove(this.controllerModel1);
+                    this.controllerGrip1.remove(this.markerModel1);
                     this.hand1.add(this.handModel1);
                     break;
                 case 'Controller':
                 default:
-                    this.controllerGrip1.add(this.model1);
+                    this.controllerGrip1.add(this.controllerModel1);
+                    this.controllerGrip1.remove(this.markerModel1);
                     this.hand1.remove(this.handModel1);
             }
         }
