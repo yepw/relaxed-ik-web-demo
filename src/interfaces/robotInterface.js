@@ -1,7 +1,7 @@
 import * as T from 'three';
 import URDFLoader from 'urdf-loader';
 import { FileUploader, Select, Checkbox, Button, Slider, Container, TextInput } from '../ui/pageElements';
-import { getURDFFromURL, getWedModifiedURDF } from '../robotFunctions/loaderHelper';
+import { getURDFFromURL, getURDFFromLocal } from '../robotFunctions/loaderHelper';
 import { AnimationInterface } from './animationInterface';
 import { LineInterface } from './lineInterface';
 import { JointInterface } from './jointInterface';
@@ -27,7 +27,7 @@ export class RobotInterface {
         this.robotLoader = new FileUploader("Upload Robot", "inputs", [], true);
         this.robotLoader.fileUploader.onchange = () => {
             if (this.robotLoader.getFiles().length > 0) {
-                getWedModifiedURDF(this.robotLoader.getFiles(), (blob) => {
+                getURDFFromLocal(this.robotLoader.getFiles(), (blob) => {
                     loadRobot(URL.createObjectURL(blob))
                 });
             }

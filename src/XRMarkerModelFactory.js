@@ -112,9 +112,10 @@ class XRMarkerModelFactory {
                 this.gltfLoader.load( markerModel.marker.assetUrl, ( asset ) => {
                     this._assetCache[ markerModel.marker.assetUrl ] = asset;
 
+                    // scene = asset.scene.clone();
                     // only keep the pen itself, remove the pen cap
                     scene = asset.scene.children[0].children[0].children[0].children[0].children[0].clone();
-                    let scale = 0.01;
+					let scale = 0.01;
                     scene.scale.set(scale, scale, scale);
                     scene.rotateX( - Math.PI / 2); // up  
                     addAssetSceneToMarkerModel( markerModel, scene );

@@ -7,7 +7,7 @@ import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerM
 import { XRHandModelFactory  } from 'three/examples/jsm/webxr/XRHandModelFactory.js';
 import { XRMarkerModelFactory  } from './XRMarkerModelFactory';
 // import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3 } from './utils';
-
+import { CanvasUI } from './interfaces/WebXRCanvasUI'
 
 export class VrControl {
     constructor(options) {
@@ -110,6 +110,28 @@ export class VrControl {
         window.robot.links.right_hand.add(axesHelper);
         let axesHelper2 = new T.AxesHelper(5);
         this.controllerGrip1.add(axesHelper2);
+
+        const config = {
+            image_marker: { type: "img", position: { left: 2, top: 2 }, width: 250 },
+            image_tongs: { type: "img", position: { left: 254, top: 2 }, width: 250 },
+            body: { backgroundColor: "#666", 
+                    opacity: 0.7,
+                    padding:0
+                },
+            panelSize: { width: 0.1, height: 0.025},
+            opacity:  1.0,
+            width: 1024,
+            height: 256,
+        }
+        const content = {
+            image_marker: "../images/marker.png",
+            image_tongs: "../images/tongs.png"
+        }
+        const ui = new CanvasUI(content, config);
+
+        ui.mesh.position.set( 0., -0.04, -0.12 );
+        this.camera.add(ui.mesh);
+
     }
 
     squeeze() {
