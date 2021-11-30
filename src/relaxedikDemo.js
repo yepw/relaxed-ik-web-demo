@@ -69,7 +69,6 @@ export function relaxedikDemo() {
     createText("VR Options:", "inputs", "h3");
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
-    createToggleSwitch ("re-ground", "inputs", "6 DoF", "4 DoF", true);
     createSelect("controller-vis", "Controller Visualization", "inputs", ['None', 'Controller', 'Pen', 'Tongs', 'Hand (Not working)']);
 
     createBr("inputs");

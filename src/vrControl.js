@@ -114,11 +114,6 @@ export class VrControl {
             this.renderer.xr.defaultPosition = this.defaultPosition;
         })
 
-        let reGroundToggle = document.querySelector('#re-ground-toggle');
-        reGroundToggle.addEventListener('click', (e) => {
-            this.reGround4DoF = e.target.checked;
-        })
-
         let axesHelper = new T.AxesHelper(5);
         window.robot.links.right_hand.add(axesHelper);
         let axesHelper2 = new T.AxesHelper(5);
@@ -190,6 +185,26 @@ export class VrControl {
             }, 5);
         }
     }
+    
+    gamepad_left() {
+        console.log("left");
+    }
+    
+    gamepad_right() {
+        console.log("right");
+    }
+
+    gamepad_backward() {
+        console.log("backward");
+    }
+    
+    gamepad_forward() {
+        console.log("forward");
+    }
+    
+    gamepad_center() {
+        console.log("center");
+    }
 
     getPose(controller) {
         let controllerPos = controller.getWorldPosition(new T.Vector3())
@@ -210,39 +225,31 @@ export class VrControl {
 	    //determine if we are in an xr session
         if (this.renderer.xr.getSession()) {
             if (this.vive_buttons.buttons[2].pressed){
-                if (Math.abs(Date.now() - this.lastSqueeze) > 50) {
+                if (Math.abs(Date.now() - this.lastTouchpad) > 50) {
+                    // pause control
                     this.controlMode = false;
                     clearInterval(this.intervalID);
-                    if (this.reGround4DoF) {
-                        let eyePose = this.camera.matrixWorld.clone();
-                        let userPose = this.userGroup.matrixWorld.clone();
-                        let handPose = this.controllerGrip1.matrixWorld.clone();
-                        let relHandPose = userPose.clone().invert().multiply( handPose);
-                        let eePosi = new T.Vector3().setFromMatrixPosition(window.robot.links.right_hand.matrixWorld);
-                        
-                        let targetPose = new T.Matrix4().compose(eePosi, new T.Quaternion().setFromRotationMatrix(handPose), new T.Vector3(1., 1., 1.));
-                        let newUserGroupPose = targetPose.clone().multiply(relHandPose.clone().invert());
-                   
-                        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
-                        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
-
-                    } else { 
-                        // 6DoF reground
-                        let eyePose = this.camera.matrixWorld.clone();
-                        let userPose = this.userGroup.matrixWorld.clone();
-                        let handPose = this.controllerGrip1.matrixWorld.clone();
-                        let relHandPose = userPose.clone().invert().multiply( handPose);
-                        let eePose = window.robot.links.right_hand.matrixWorld.clone();
-                        let eeToViveOffset = new T.Matrix4().makeRotationFromEuler(
-                            new T.Euler(0., -1.57079632679, 1.57079632679)
-                        );
-                        let newUserGroupPose = eePose.clone().multiply(eeToViveOffset).multiply(relHandPose.clone().invert());
-                        
-                        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
-                        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
-
+                    
+                    // left
+                    if (this.vive_buttons.axes[0] < -0.7 && Math.abs(this.vive_buttons.axes[1]) < 0.4) {
+                        this.gamepad_left();
+                    } else 
+                    // right
+                    if (this.vive_buttons.axes[0] > 0.7 && Math.abs(this.vive_buttons.axes[1]) < 0.4) {
+                        this.gamepad_right();
+                    } else
+                    // backward
+                    if (this.vive_buttons.axes[1] > 0.7 && Math.abs(this.vive_buttons.axes[0]) < 0.4) {
+                        this.gamepad_backward();
+                    } else
+                    // forward
+                    if (this.vive_buttons.axes[1] < -0.7 && Math.abs(this.vive_buttons.axes[0]) < 0.4) {
+                        this.gamepad_forward();
+                    } else
+                    // center
+                    {
+                        this.gamepad_center();
                     }
-                   
 
                 }
                 this.lastTouchpad = Date.now()
