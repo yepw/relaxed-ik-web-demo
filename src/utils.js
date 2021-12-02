@@ -43,9 +43,9 @@ export function degToRad(degrees) {
 
 export function getCurrEEpose() {
     let ee_posi = new T.Vector3();
-    window.robot.links.right_hand.getWorldPosition(ee_posi);
+    window.robot.links.finger_tip.getWorldPosition(ee_posi);
     let ee_ori = new T.Quaternion();
-    window.robot.links.right_hand.getWorldQuaternion(ee_ori);
+    window.robot.links.finger_tip.getWorldQuaternion(ee_ori);
     return {"posi": ee_posi, 
             "ori": ee_ori}
 }

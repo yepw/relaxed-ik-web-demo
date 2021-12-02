@@ -37,7 +37,7 @@ export function relaxedikDemo() {
     let vrControl = undefined;
     let jointSliders = [];
 
-    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
         loadRobot(URL.createObjectURL(blob))
     });
 
@@ -69,7 +69,6 @@ export function relaxedikDemo() {
     createText("VR Options:", "inputs", "h3");
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
-    createSelect("controller-vis", "Controller Visualization", "inputs", ['None', 'Controller', 'Pen', 'Tongs', 'Hand (Not working)']);
 
     createBr("inputs");
     createBr("inputs");
@@ -293,7 +292,7 @@ export function relaxedikDemo() {
 
     async function load_config() {
         console.log("loading robot config");
-        let robot_info = yaml.load(await fetch("https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/collision-ik/config/info_files/sawyer_info.yaml").then(response => response.text()));
+        let robot_info = yaml.load(await fetch("https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/sawyer_gripper_info.yaml").then(response => response.text()));
         let robot_nn_config = yaml.load(await fetch("https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/collision-ik/config/collision_nn_rust/sawyer_nn.yaml").then(response => response.text()));
 
         // move robot to init config

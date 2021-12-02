@@ -3,17 +3,13 @@
  */
 
 import * as T from 'three';
-import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
-import { XRHandModelFactory  } from 'three/examples/jsm/webxr/XRHandModelFactory.js';
-import { XRMarkerModelFactory  } from './XRMarkerModelFactory';
-import { XRTongsModelFactory  } from './XRTongsModelFactory';
 // import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3 } from './utils';
 import { CanvasUI } from './interfaces/WebXRCanvasUI'
+import { Arsenal } from './arsenal';
 
 export class VrControl {
     constructor(options) {
 
-        this.relaxedIK = options.relaxedIK
         this.renderer = options.renderer
         this.scene = options.scene
         this.camera = options.camera;
@@ -35,23 +31,11 @@ export class VrControl {
         this.rel_rot = false;
 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
-        const controllerModelFactory = new XRControllerModelFactory();
-        this.controllerModel1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
-
-        this.hand1 = this.renderer.xr.getHand( 0 );
-        const handModelFactory = new XRHandModelFactory();
-        this.handModel1 = handModelFactory.createHandModel(this.hand1);
-        
-        const markerModelFactory = new XRMarkerModelFactory();
-        this.markerModel1 = markerModelFactory.createMarkerModel(this.controllerGrip1);
-        const tongsModelFactory = new XRTongsModelFactory();
-        this.tongsModel1 = tongsModelFactory.createTongsModel(this.controllerGrip1);
 
         this.userGroup = new T.Group();
         this.userGroup.name = "user_group";
         this.userGroup.add(this.camera);
         this.userGroup.add(this.controllerGrip1);
-        this.userGroup.add(this.hand1);
         this.scene.add(this.userGroup);
 
         this.select = this.select.bind(this);
@@ -64,45 +48,12 @@ export class VrControl {
             that.vive_buttons = e.data.gamepad;
         })
 
-        let controllerVisSelect = document.querySelector('#controller-vis-select');
-        controllerVisSelect.onchange = (user_change) => {
-            switch (controllerVisSelect.value) {
-                case 'None':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.controllerGrip1.remove(this.tongsModel1);
-                    this.hand1.remove(this.handModel1);
-                    break;
-                case 'Pen':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.add(this.markerModel1);
-                    this.controllerGrip1.remove(this.tongsModel1);
-                    this.hand1.remove(this.handModel1);
-                    break;
-                case 'Tongs':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.controllerGrip1.add(this.tongsModel1);
-                    this.hand1.remove(this.handModel1);
-                    break;
-                case 'Hand (Not working on Vive)':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.controllerGrip1.remove(this.tongsModel1);
-                    this.hand1.add(this.handModel1);
-                    break;
-                case 'Controller':
-                default:
-                    this.controllerGrip1.add(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.controllerGrip1.remove(this.tongsModel1);
-                    this.hand1.remove(this.handModel1);
-            }
-        }
+        this.arsenal = new Arsenal( {
+            "controllerGrip": this.controllerGrip1,
+            "camera": this.camera,
+            "mouseControl": this.mouseControl
+        })
         
-        controllerVisSelect.value = "Controller";
-        controllerVisSelect.onchange();
-
         let stereoToggle = document.querySelector('#stereo-toggle');
         stereoToggle.addEventListener('click', (e) => {
             this.renderer.xr.stereo = e.target.checked
@@ -115,42 +66,21 @@ export class VrControl {
         })
 
         let axesHelper = new T.AxesHelper(5);
-        window.robot.links.right_hand.add(axesHelper);
+        window.robot.links.finger_tip.add(axesHelper);
         let axesHelper2 = new T.AxesHelper(5);
         this.controllerGrip1.add(axesHelper2);
-
-        const config = {
-            image_marker: { type: "img", position: { left: 2, top: 2 }, width: 250 },
-            image_tongs: { type: "img", position: { left: 254, top: 2 }, width: 250 },
-            body: { backgroundColor: "#666", 
-                    opacity: 0.7,
-                    padding:0
-                },
-            panelSize: { width: 0.1, height: 0.025},
-            opacity:  1.0,
-            width: 1024,
-            height: 256,
-        }
-        const content = {
-            image_marker: "../images/marker.png",
-            image_tongs: "../images/tongs.png"
-        }
-        const ui = new CanvasUI(content, config);
-
-        ui.mesh.position.set( 0., -0.04, -0.12 );
-        this.camera.add(ui.mesh);
 
     }
 
     squeeze() {
         if (Math.abs(Date.now() - this.lastSqueeze) > 300) {
-            console.log('Reset robot pose')
-            this.mouseControl.reset()
+            console.log('Reset robot pose');
+            this.arsenal.robot_reset();
         } else {
             this.renderer.xr.stereo = !this.renderer.xr.stereo;
             console.log('Stereo: ' +  this.renderer.xr.stereo);
         }
-        this.lastSqueeze = Date.now()
+        this.lastSqueeze = Date.now();
     }
 
     select() {
@@ -178,8 +108,7 @@ export class VrControl {
                     r = curr.r.clone();
                 }
 
-                // in world space, y is up; in robot space, z is up
-                this.mouseControl.onControllerMove(x, z, y, r, this.rel_rot)
+                this.arsenal.onControllerMove(x, z, y, r, this.rel_rot)
 
                 prev = curr
             }, 5);
@@ -187,11 +116,11 @@ export class VrControl {
     }
     
     gamepad_left() {
-        console.log("left");
+        this.arsenal.prev_tool();
     }
     
     gamepad_right() {
-        console.log("right");
+        this.arsenal.next_tool();
     }
 
     gamepad_backward() {
