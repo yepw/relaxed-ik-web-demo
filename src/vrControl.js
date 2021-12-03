@@ -19,7 +19,7 @@ export class VrControl {
         this.scale = 20000
 
         this.lastSqueeze = 0;
-        this.lastTouchpad = 0
+        this.lastTouchpad = Date.now();
         this.defaultPosition = new T.Vector3();
         this.defaultPosition.set(1.5, 1.5, 0)
 
@@ -124,15 +124,15 @@ export class VrControl {
     }
 
     gamepad_backward() {
-        console.log("backward");
+        console.log("backward button pressed");
     }
     
     gamepad_forward() {
-        console.log("forward");
+        console.log("forward button pressed");
     }
     
     gamepad_center() {
-        console.log("center");
+        console.log("center button pressed");
     }
 
     getPose(controller) {
@@ -154,7 +154,7 @@ export class VrControl {
 	    //determine if we are in an xr session
         if (this.renderer.xr.getSession()) {
             if (this.vive_buttons.buttons[2].pressed){
-                if (Math.abs(Date.now() - this.lastTouchpad) > 50) {
+                if (Math.abs(Date.now() - this.lastTouchpad) > 300) {
                     // pause control
                     this.controlMode = false;
                     clearInterval(this.intervalID);
@@ -179,7 +179,6 @@ export class VrControl {
                     {
                         this.gamepad_center();
                     }
-
                 }
                 this.lastTouchpad = Date.now()
             }

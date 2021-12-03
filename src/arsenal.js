@@ -18,7 +18,7 @@ export class InputTool {
     }
 }
 
-export class Arsenal { 
+export class Arsenal {
     constructor(options) {
 
         this.controllerGrip = options.controllerGrip;
@@ -36,7 +36,7 @@ export class Arsenal {
         let tongsModel = tongsModelFactory.createTongsModel(this.controllerGrip);
 
         this.canvas_config = {
-            body: { backgroundColor: "#666", 
+            body: { backgroundColor: "#666",
                     opacity: 0.7,
                     padding:0
                 },
@@ -44,9 +44,19 @@ export class Arsenal {
             opacity:  1.0,
             width: 1040,
             height: 260,
+            highlight: {
+                type: "text",
+                position:{ left :7.5, top: 7.5 },
+                backgroundColor: "#c5050c",
+                height: 245,
+                width: 245,
+                borderRadius: 5
+            }
         }
-        this.canvas_content = { }
-        
+        this.canvas_content = {
+            highlight:""
+        }
+
         this.add( new InputTool({
             name: 'controller',
             model: controllerModel,
@@ -65,30 +75,38 @@ export class Arsenal {
             image_url: "../images/tongs.png"
         }));
 
-        this.change_tool();
+        this.controllerGrip.add(this.tools[0].model);
+
+        const content = this.canvas_content;
+        const config = this.canvas_config;
+
+        window.ui = new CanvasUI(content, config);
+        window.ui.mesh.position.set( 0.02, -0.04, -0.12 );
+        this.camera.add(window.ui.mesh);
     }
 
     add(tool) {
         this.tools.push(tool);
-        this.canvas_config["image_" + tool.name] = 
-            {   type: "img", 
-                position: { 
-                    left: 10 + (this.tools.length-1) * (240 + 10), 
-                    top: 10 }, 
-                width: 240  };
+        this.canvas_config["image_" + tool.name] =
+            {   type: "img",
+                position: {
+                    left: 15 + (this.tools.length-1) * (230 + 30),
+                    top: 15 },
+                width: 230,
+                borderRadius: 5  };
         this.canvas_content["image_" + tool.name] = tool.image_url;
     }
 
     next_tool() {
         this.curr_tool_id += 1;
-        if (this.curr_tool_id == this.tools.length) 
+        if (this.curr_tool_id == this.tools.length)
             this.curr_tool_id = 0;
         this.change_tool();
     }
 
     prev_tool() {
         this.curr_tool_id -= 1;
-        if (this.curr_tool_id == -1) 
+        if (this.curr_tool_id == -1)
             this.curr_tool_id = this.tools.length - 1;
         this.change_tool();
     }
@@ -101,11 +119,10 @@ export class Arsenal {
                 this.controllerGrip.remove(this.tools[i].model);
         }
 
-        if (window.ui) 
-            this.camera.remove(window.ui.mesh);
-        window.ui = new CanvasUI(this.canvas_content, this.canvas_config);
-        window.ui.mesh.position.set( 0., -0.04, -0.12 );
-        this.camera.add(window.ui.mesh);
+        window.ui.updateConfig('highlight', 'position', 
+            { left :7.5 + this.curr_tool_id * 260, top: 7.5, 
+                x:  7.5 + this.curr_tool_id * 260, y: 7.5 });
+        window.ui.update();
     }
 
     robot_reset() {
