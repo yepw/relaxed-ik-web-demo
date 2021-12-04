@@ -101,7 +101,7 @@ class XRTongsModelFactory {
                 scene = cachedAsset.scene.clone();
                 let scale = 0.02;
                 scene.scale.set(scale, scale, scale);
-                scene.rotateY( Math.PI ); // up
+                scene.rotateY( Math.PI ); 
                 addAssetSceneToTongsModel( tongsModel, scene );
             } else {
                 if ( ! this.gltfLoader ) {
@@ -115,7 +115,7 @@ class XRTongsModelFactory {
 					scene = asset.scene.clone();
 					let scale = 0.02;
                     scene.scale.set(scale, scale, scale);
-                    scene.rotateX( - Math.PI / 2); // up  
+                    scene.rotateY( Math.PI ); 
                     addAssetSceneToTongsModel( tongsModel, scene );
                 },
                 null,

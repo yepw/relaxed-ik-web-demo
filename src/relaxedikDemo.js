@@ -70,6 +70,14 @@ export function relaxedikDemo() {
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
 
+    createToggleSwitch ("kitchen", "inputs", "Kitchen Hide", "Show", true);
+    let kitchenToggle = document.getElementById('kitchen-toggle');
+    kitchenToggle.onclick = function() {
+        if (this.checked) {
+        } else {
+        }
+    };
+
     createBr("inputs");
     createBr("inputs");
 
@@ -289,6 +297,22 @@ export function relaxedikDemo() {
     let taskControl = new TaskControl({ scene, camera });
     window.taskControl = taskControl;
     taskControl.init();
+    let taskSelect = createSelect("tasks", "tasks", "inputs", [
+        'Pick and Place',
+        'Drawing'
+    ]);
+    taskSelect.onchange = function() {
+        switch (taskSelect.value) {
+            case 'Drawing':
+                window.taskControl.curr_task = 'drawing';
+                taskControl.init();
+                break;
+            case 'Pick and Place':
+            default:
+                window.taskControl.curr_task = 'pickplace';
+                taskControl.init();
+        }
+    }
 
     async function load_config() {
         console.log("loading robot config");

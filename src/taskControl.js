@@ -1,21 +1,22 @@
 import { Brick, PickAndPlaceBricksTabletop } from "./tasks/pickAndPlace"
+import { DrawingTask, circleCurve, rectCurve, SVGCurve } from "./tasks/drawing"
 import * as T from 'three'
-
-import {
-    getBrowser, threejsVector3ToMathjsMat,
-} from "./utils.js";
 
 export class TaskControl {
     constructor(options) {
         this.scene = options.scene
-        this.browser = getBrowser();
-        this.study = new PickAndPlaceBricksTabletop({ scene: this.scene });
+        this.task = {
+            'pickplace': new PickAndPlaceBricksTabletop({ scene: this.scene }),
+            'drawing': new DrawingTask({ scene: this.scene })
+        };
+        this.curr_task = 'pickplace'
+
         this.camera = options.camera;
 
         const TABLE_HEIGHT = 0.92;
 
         // 2D array to support multiple bricks/targets in a round
-        this.rounds = [
+        this.rounds = { 'pickplace': [
             [
                 new Brick({
                     init_posi: new T.Vector3(0.8, TABLE_HEIGHT + 0.02, 0.2),
@@ -46,45 +47,54 @@ export class TaskControl {
                     scene: this.scene
                 })
             ]
-        ]
-
+        ],
+        'drawing': [
+            new rectCurve(),
+            new circleCurve(),
+            new SVGCurve('hri_curve.svg'),
+            new SVGCurve('ros_curve.svg'),
+            new SVGCurve('lab_curve.svg')
+        ]};
     }
-
+        
     finished() {
-        if (this.round < this.rounds.length) {
-            this.round++;
+        if (this.curr_round < this.rounds[this.curr_task].length) {
+            this.curr_round++;
             this.pubRound();
         } else {
             alert('All tasks are completed');
         }
     }
 
-    // pubTaskPrepare() {
-    //     this.study.pubTaskPrepare();
-    // }
-
     pubRound() {
         let that = this;
-        this.study.removeBricks();
-        this.study.bricks = [];
-    
-        this.rounds[this.round - 1].forEach((brick) => {
-            this.study.bricks.push(brick);
-        });
+        let task = this.task[this.curr_task];
+        switch (this.curr_task) {
+            case 'drawing':
+                task.removeCurve();
+                task.curve = this.rounds[this.curr_task][this.curr_round - 1];
+                break;
+            case 'pickplace':
+                task.removeBricks();
+                task.bricks = [];
+                this.rounds[this.curr_task][this.curr_round - 1].forEach((brick) => {
+                    task.bricks.push(brick);
+                });
+        }
 
-        this.study.pubTaskPrepare();
+        task.pubTaskPrepare();
     }
 
     init() {
-        this.round = 1
+        this.curr_round = 1
+        if (this.prev_task)
+            this.task[this.prev_task].quit();
+        this.prev_task = this.curr_task;
+        this.task[this.curr_task].init();
         this.pubRound();
-        this.study.init();
-        // this.pubTaskPrepare();
-        // this.camera.position.set(2, 1.5, 0);
-        // this.camera.lookAt(new T.Vector3(0, 1.5, 0));
     }
 
     update(ee_pose) {
-        this.study.update(ee_pose);
+        this.task[this.curr_task].update(ee_pose);
     }
 }
