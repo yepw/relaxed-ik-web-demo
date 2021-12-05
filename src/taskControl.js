@@ -71,8 +71,8 @@ export class TaskControl {
         let task = this.task[this.curr_task];
         switch (this.curr_task) {
             case 'drawing':
-                task.removeCurve();
-                task.curve = this.rounds[this.curr_task][this.curr_round - 1];
+                task.removeTargetCurve();
+                task.targetCurve = this.rounds[this.curr_task][this.curr_round - 1];
                 break;
             case 'pickplace':
                 task.removeBricks();

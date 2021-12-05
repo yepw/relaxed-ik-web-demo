@@ -43,8 +43,9 @@ export function relaxedikDemo() {
         sawyerRobotFile = URL.createObjectURL(blob)
     });
 
-    let ur5RobotFile; 
-    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/ur5_description/urdf/ur5_gripper.urdf", (blob) => {
+    let ur5RobotFile;
+    // https://raw.githubusercontent.com/yepw/robot_configs/master 
+    getURDFFromURL("./ur5_description/urdf/ur5_gripper.urdf", (blob) => {
         ur5RobotFile = URL.createObjectURL(blob)
     });
 
@@ -77,7 +78,7 @@ export function relaxedikDemo() {
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
 
-    let robotSwitch = createSelect("robot", "robot", "inputs", [
+    let robotSwitch = createSelect("robot", "Robot", "inputs", [
         'None',
         'Sawyer',
         'UR5'
@@ -235,8 +236,8 @@ export function relaxedikDemo() {
         manager.onLoad = () => {
             scene.add(window.robot);
             window.robot.rotation.x = -Math.PI / 2;
-            window.robot.position.y = .05;
-            window.robot.position.x = .1;
+            // window.robot.position.y = .05;
+            // window.robot.position.x = .1;
             // window.robot.scale.x = 1.15;
             // window.robot.scale.y = 1.15;
             // window.robot.scale.z = 1.15;

@@ -99,7 +99,7 @@ class XRMarkerModelFactory {
             const cachedAsset = this._assetCache[ markerModel.marker.assetUrl ];
             if ( cachedAsset ) {
                 scene = cachedAsset.scene.children[0].children[0].children[0].children[0].children[0].clone();
-                let scale = 0.01;
+                let scale = 0.011;
                 scene.scale.set(scale, scale, scale);
                 scene.rotateY( Math.PI ); // up
                 addAssetSceneToMarkerModel( markerModel, scene );
@@ -115,7 +115,7 @@ class XRMarkerModelFactory {
                     // scene = asset.scene.clone();
                     // only keep the pen itself, remove the pen cap
                     scene = asset.scene.children[0].children[0].children[0].children[0].children[0].clone();
-					let scale = 0.01;
+					let scale = 0.011;
                     scene.scale.set(scale, scale, scale);
                     scene.rotateX( - Math.PI / 2); // up  
                     addAssetSceneToMarkerModel( markerModel, scene );
