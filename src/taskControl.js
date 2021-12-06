@@ -51,9 +51,9 @@ export class TaskControl {
         'drawing': [
             new rectCurve(),
             new circleCurve(),
-            new SVGCurve('hri_curve.svg'),
-            new SVGCurve('ros_curve.svg'),
-            new SVGCurve('lab_curve.svg')
+            new SVGCurve('hri_curve.svg')
+            // new SVGCurve('ros_curve.svg'),
+            // new SVGCurve('lab_curve.svg')
         ]};
     }
         
@@ -64,6 +64,7 @@ export class TaskControl {
         } else {
             // alert('All tasks are completed');
             this.curr_round = 1;
+            this.pubRound();
         }
     }
 

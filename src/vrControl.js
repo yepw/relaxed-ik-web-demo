@@ -28,7 +28,7 @@ export class VrControl {
         this.reGround4DoF = true;
 
         // if true, send relative rotation (velocity) commend to relaxedik
-        this.rel_rot = false;
+        this.rel_rot = true;
 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
 

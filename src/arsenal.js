@@ -15,6 +15,7 @@ export class InputTool {
         this.name = options.name;
         this.model = options.model;
         this.image_url = options.image_url;
+        this.relaxedik_config = options.relaxedik_config;
     }
 }
 
@@ -60,19 +61,49 @@ export class Arsenal {
         this.add( new InputTool({
             name: 'controller',
             model: controllerModel,
-            image_url: "../images/vive_controller.png"
+            image_url: "../images/vive_controller.png",
+            relaxedik_config: {
+                x: true,
+                y: true,
+                z: true,
+                rx: true,
+                ry: true,
+                rz: true,
+                rel_pos: true,
+                rel_rot: true
+            }
         }));
 
         this.add( new InputTool({
             name: 'pen',
             model: markerModel,
-            image_url: "../images/marker.png"
+            image_url: "../images/marker.png",
+            relaxedik_config: {
+                x: true,
+                y: true,
+                z: true,
+                rx: true,
+                ry: true,
+                rz: false,
+                rel_pos: true,
+                rel_rot: false
+            }
         }));
 
         this.add( new InputTool({
             name: 'tongs',
             model: tongsModel,
-            image_url: "../images/tongs.png"
+            image_url: "../images/tongs.png",
+            relaxedik_config: {
+                x: true,
+                y: true,
+                z: true,
+                rx: false,
+                ry: true,
+                rz: true,
+                rel_pos: true,
+                rel_rot: false
+            }
         }));
 
         this.controllerGrip.add(this.tools[0].model);
@@ -135,6 +166,11 @@ export class Arsenal {
     }
 
     change_tool() {
+        if (this.curr_tool_id == 1) 
+            window.vrControl.rel_rot = false;
+        else
+            window.vrControl.rel_rot = true;
+
         for (let i=0; i<this.tools.length; i++) {
             if (i==this.curr_tool_id)
                 this.controllerGrip.add(this.tools[i].model);
@@ -146,6 +182,8 @@ export class Arsenal {
             { left :7.5 + this.curr_tool_id * 260, top: 7.5, 
                 x:  7.5 + this.curr_tool_id * 260, y: 7.5 });
         window.ui.update();
+
+        window.vrControl.squeeze();
     }
 
     robot_reset() {

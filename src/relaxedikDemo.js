@@ -35,7 +35,7 @@ export function relaxedikDemo() {
 
     window.robot = {};
     let mouseControl = undefined;
-    let vrControl = undefined;
+    window.vrControl = undefined;
     let jointSliders = [];
 
     let sawyerRobotFile; 
@@ -382,7 +382,7 @@ export function relaxedikDemo() {
             } 
         }, 5);
 
-        vrControl = new VrControl({
+        window.vrControl = new VrControl({
             renderer,
             scene,
             camera,
@@ -404,8 +404,8 @@ export function relaxedikDemo() {
     renderer.setAnimationLoop( function () {
 
         renderer.render( scene, camera );
-        if (vrControl)
-            vrControl.update();
+        if (window.vrControl)
+            window.vrControl.update();
     
     } );
     
