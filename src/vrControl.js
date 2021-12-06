@@ -124,11 +124,23 @@ export class VrControl {
     }
 
     gamepad_backward() {
-        console.log("backward button pressed");
+        if (window.taskControl)
+            window.taskControl.finished();
     }
     
     gamepad_forward() {
-        console.log("forward button pressed");
+        // re-ground
+        let eyePose = this.camera.matrixWorld.clone();
+        let userPose = this.userGroup.matrixWorld.clone();
+        let handPose = this.controllerGrip1.matrixWorld.clone();
+        let relHandPose = userPose.clone().invert().multiply( handPose);
+        let eePosi = new T.Vector3().setFromMatrixPosition(window.robot.links.finger_tip.matrixWorld);
+
+        let targetPose = new T.Matrix4().compose(eePosi, new T.Quaternion().setFromRotationMatrix(handPose), new T.Vector3(1., 1., 1.));
+        let newUserGroupPose = targetPose.clone().multiply(relHandPose.clone().invert());
+
+        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
+        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
     }
     
     gamepad_center() {

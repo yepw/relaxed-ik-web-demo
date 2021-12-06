@@ -77,7 +77,7 @@ export class rectCurve extends T.Line{
     }
 }
 
-export class SVGCurve extends T.Line{
+export class SVGCurve extends T.Group{
     constructor (file_name) {
         super();
         let factor = 0.0006;
@@ -91,14 +91,14 @@ export class SVGCurve extends T.Line{
             // called when the resource is loaded
             function (data) {
                 const paths = data.paths;
+                const material = new T.LineBasicMaterial({
+                    color: 0x0000aa,
+                    side: T.DoubleSide,
+                    linewidth: 4
+                });
 
                 for (let i = 0; i < paths.length; i++) {
                     const path = paths[i];
-                    that.material = new T.LineBasicMaterial({
-                        color: 0x0000aa,
-                        side: T.DoubleSide,
-                        linewidth: 4
-                    });
 
                     let curves = path.subPaths[0].curves;
                     for (let j = 0; j < curves.length; j++) {
@@ -113,7 +113,9 @@ export class SVGCurve extends T.Line{
                             points.push( boardTransform(point) );
                         }
             
-                        that.geometry = new T.BufferGeometry().setFromPoints(points);
+                        let geometry = new T.BufferGeometry().setFromPoints(points);
+                        let mesh = new T.Line(geometry, material);
+                        that.add(mesh);
                     }
                 }
             },
@@ -292,6 +294,7 @@ export class DrawingTask {
         for (let i =0; i<this.penCurves.length; i++) {
             this.penCurves[i].remove();
         }
+        this.penCurves = [];
     }
 
     removeModels() {
@@ -302,6 +305,7 @@ export class DrawingTask {
     }
 
     pubTaskPrepare() {
+        this.removePenCurves();
         if (this.targetCurve)
             this.scene.add(this.targetCurve);
     }
@@ -369,7 +373,6 @@ export class DrawingTask {
     }
 
     drawPen() { 
-        console.log(window.robot);
         let that = this;
         if (!this.pen) {
             let loader = new GLTFLoader();

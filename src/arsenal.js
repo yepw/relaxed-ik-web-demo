@@ -40,7 +40,7 @@ export class Arsenal {
                     opacity: 0.7,
                     padding:0
                 },
-            panelSize: { width: 0.1, height: 0.025},
+            panelSize: { width: 0.14, height: 0.035},
             opacity:  1.0,
             width: 1040,
             height: 260,
@@ -81,8 +81,31 @@ export class Arsenal {
         const config = this.canvas_config;
 
         window.ui = new CanvasUI(content, config);
-        window.ui.mesh.position.set( 0.02, -0.04, -0.12 );
+        window.ui.mesh.position.set( 0.05, -0.07, -0.2 );
         this.camera.add(window.ui.mesh);
+
+        const text_config = {
+            body: { backgroundColor: "#666",
+                    opacity: 1.0,
+                    padding: 20,
+                    fontColor: '#000',
+                    borderRadius: 5
+                },
+            panelSize: { width: 0.03, height: 0.035},
+            opacity:  1.0,
+            width: 300,
+            height: 350,
+            padding: 20
+        };
+        const text_content = {
+            body: "Trigger: Clutch\
+                    Gamepad left/right: Switch tools\
+                    Gamepad up: Re-ground\
+                    Gamepad down: Next round"
+        };
+        const text_ui = new CanvasUI(text_content, text_config);
+        text_ui.mesh.position.set( -0.04, -0.07, -0.2 );
+        this.camera.add(text_ui.mesh);
     }
 
     add(tool) {

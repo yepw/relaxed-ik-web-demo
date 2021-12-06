@@ -62,7 +62,8 @@ export class TaskControl {
             this.curr_round++;
             this.pubRound();
         } else {
-            alert('All tasks are completed');
+            // alert('All tasks are completed');
+            this.curr_round = 1;
         }
     }
 

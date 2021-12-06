@@ -44,8 +44,7 @@ export function relaxedikDemo() {
     });
 
     let ur5RobotFile;
-    // https://raw.githubusercontent.com/yepw/robot_configs/master 
-    getURDFFromURL("./ur5_description/urdf/ur5_gripper.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/ur5_description/urdf/ur5_gripper.urdf", (blob) => {
         ur5RobotFile = URL.createObjectURL(blob)
     });
 
