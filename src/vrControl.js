@@ -3,16 +3,13 @@
  */
 
 import * as T from 'three';
-import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
-import { XRHandModelFactory  } from 'three/examples/jsm/webxr/XRHandModelFactory.js';
-import { XRMarkerModelFactory  } from './XRMarkerModelFactory';
 // import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3 } from './utils';
-
+import { CanvasUI } from './interfaces/WebXRCanvasUI'
+import { Arsenal } from './arsenal';
 
 export class VrControl {
     constructor(options) {
 
-        this.relaxedIK = options.relaxedIK
         this.renderer = options.renderer
         this.scene = options.scene
         this.camera = options.camera;
@@ -22,7 +19,7 @@ export class VrControl {
         this.scale = 20000
 
         this.lastSqueeze = 0;
-        this.lastTouchpad = 0
+        this.lastTouchpad = Date.now();
         this.defaultPosition = new T.Vector3();
         this.defaultPosition.set(1.5, 1.5, 0)
 
@@ -34,21 +31,11 @@ export class VrControl {
         this.rel_rot = false;
 
         this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
-        const controllerModelFactory = new XRControllerModelFactory();
-        this.controllerModel1 = controllerModelFactory.createControllerModel(this.controllerGrip1);
-
-        this.hand1 = this.renderer.xr.getHand( 0 );
-        const handModelFactory = new XRHandModelFactory();
-        this.handModel1 = handModelFactory.createHandModel(this.hand1);
-        
-        const markerModelFactory = new XRMarkerModelFactory();
-        this.markerModel1 = markerModelFactory.createMarkerModel(this.controllerGrip1);
 
         this.userGroup = new T.Group();
         this.userGroup.name = "user_group";
         this.userGroup.add(this.camera);
         this.userGroup.add(this.controllerGrip1);
-        this.userGroup.add(this.hand1);
         this.scene.add(this.userGroup);
 
         this.select = this.select.bind(this);
@@ -61,35 +48,12 @@ export class VrControl {
             that.vive_buttons = e.data.gamepad;
         })
 
-        let controllerVisSelect = document.querySelector('#controller-vis-select');
-        controllerVisSelect.onchange = (user_change) => {
-            switch (controllerVisSelect.value) {
-                case 'None':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.hand1.remove(this.handModel1);
-                    break;
-                case 'Pen':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.add(this.markerModel1);
-                    this.hand1.remove(this.handModel1);
-                    break;
-                case 'Hand (Not working on Vive)':
-                    this.controllerGrip1.remove(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.hand1.add(this.handModel1);
-                    break;
-                case 'Controller':
-                default:
-                    this.controllerGrip1.add(this.controllerModel1);
-                    this.controllerGrip1.remove(this.markerModel1);
-                    this.hand1.remove(this.handModel1);
-            }
-        }
+        this.arsenal = new Arsenal( {
+            "controllerGrip": this.controllerGrip1,
+            "camera": this.camera,
+            "mouseControl": this.mouseControl
+        })
         
-        controllerVisSelect.value = "Controller";
-        controllerVisSelect.onchange();
-
         let stereoToggle = document.querySelector('#stereo-toggle');
         stereoToggle.addEventListener('click', (e) => {
             this.renderer.xr.stereo = e.target.checked
@@ -101,26 +65,22 @@ export class VrControl {
             this.renderer.xr.defaultPosition = this.defaultPosition;
         })
 
-        let reGroundToggle = document.querySelector('#re-ground-toggle');
-        reGroundToggle.addEventListener('click', (e) => {
-            this.reGround4DoF = e.target.checked;
-        })
-
         let axesHelper = new T.AxesHelper(5);
-        window.robot.links.right_hand.add(axesHelper);
+        window.robot.links.finger_tip.add(axesHelper);
         let axesHelper2 = new T.AxesHelper(5);
         this.controllerGrip1.add(axesHelper2);
+
     }
 
     squeeze() {
         if (Math.abs(Date.now() - this.lastSqueeze) > 300) {
-            console.log('Reset robot pose')
-            this.mouseControl.reset()
+            console.log('Reset robot pose');
+            this.arsenal.robot_reset();
         } else {
             this.renderer.xr.stereo = !this.renderer.xr.stereo;
             console.log('Stereo: ' +  this.renderer.xr.stereo);
         }
-        this.lastSqueeze = Date.now()
+        this.lastSqueeze = Date.now();
     }
 
     select() {
@@ -148,12 +108,31 @@ export class VrControl {
                     r = curr.r.clone();
                 }
 
-                // in world space, y is up; in robot space, z is up
-                this.mouseControl.onControllerMove(x, z, y, r, this.rel_rot)
+                this.arsenal.onControllerMove(x, z, y, r, this.rel_rot)
 
                 prev = curr
             }, 5);
         }
+    }
+    
+    gamepad_left() {
+        this.arsenal.prev_tool();
+    }
+    
+    gamepad_right() {
+        this.arsenal.next_tool();
+    }
+
+    gamepad_backward() {
+        console.log("backward button pressed");
+    }
+    
+    gamepad_forward() {
+        console.log("forward button pressed");
+    }
+    
+    gamepad_center() {
+        console.log("center button pressed");
     }
 
     getPose(controller) {
@@ -175,40 +154,31 @@ export class VrControl {
 	    //determine if we are in an xr session
         if (this.renderer.xr.getSession()) {
             if (this.vive_buttons.buttons[2].pressed){
-                if (Math.abs(Date.now() - this.lastSqueeze) > 50) {
+                if (Math.abs(Date.now() - this.lastTouchpad) > 300) {
+                    // pause control
                     this.controlMode = false;
                     clearInterval(this.intervalID);
-                    if (this.reGround4DoF) {
-                        let eyePose = this.camera.matrixWorld.clone();
-                        let userPose = this.userGroup.matrixWorld.clone();
-                        let handPose = this.controllerGrip1.matrixWorld.clone();
-                        let relHandPose = userPose.clone().invert().multiply( handPose);
-                        let eePosi = new T.Vector3().setFromMatrixPosition(window.robot.links.right_hand.matrixWorld);
-                        
-                        let targetPose = new T.Matrix4().compose(eePosi, new T.Quaternion().setFromRotationMatrix(handPose), new T.Vector3(1., 1., 1.));
-                        let newUserGroupPose = targetPose.clone().multiply(relHandPose.clone().invert());
-                   
-                        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
-                        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
-
-                    } else { 
-                        // 6DoF reground
-                        let eyePose = this.camera.matrixWorld.clone();
-                        let userPose = this.userGroup.matrixWorld.clone();
-                        let handPose = this.controllerGrip1.matrixWorld.clone();
-                        let relHandPose = userPose.clone().invert().multiply( handPose);
-                        let eePose = window.robot.links.right_hand.matrixWorld.clone();
-                        let eeToViveOffset = new T.Matrix4().makeRotationFromEuler(
-                            new T.Euler(0., -1.57079632679, 1.57079632679)
-                        );
-                        let newUserGroupPose = eePose.clone().multiply(eeToViveOffset).multiply(relHandPose.clone().invert());
-                        
-                        this.userGroup.position.setFromMatrixPosition( newUserGroupPose);
-                        this.userGroup.quaternion.setFromRotationMatrix( newUserGroupPose);
-
+                    
+                    // left
+                    if (this.vive_buttons.axes[0] < -0.7 && Math.abs(this.vive_buttons.axes[1]) < 0.4) {
+                        this.gamepad_left();
+                    } else 
+                    // right
+                    if (this.vive_buttons.axes[0] > 0.7 && Math.abs(this.vive_buttons.axes[1]) < 0.4) {
+                        this.gamepad_right();
+                    } else
+                    // backward
+                    if (this.vive_buttons.axes[1] > 0.7 && Math.abs(this.vive_buttons.axes[0]) < 0.4) {
+                        this.gamepad_backward();
+                    } else
+                    // forward
+                    if (this.vive_buttons.axes[1] < -0.7 && Math.abs(this.vive_buttons.axes[0]) < 0.4) {
+                        this.gamepad_forward();
+                    } else
+                    // center
+                    {
+                        this.gamepad_center();
                     }
-                   
-
                 }
                 this.lastTouchpad = Date.now()
             }

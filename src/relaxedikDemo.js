@@ -2,6 +2,7 @@ import * as T from 'three';
 import URDFLoader from 'urdf-loader';
 import { initScene } from './sceneInit';
 import { getURDFFromURL } from './robotFunctions/loaderHelper';
+import { recurseMaterialTraverse } from './robotFunctions/robotHelpers';
 import { createSlider, createCanvas, createText, createToggleSwitch, createBr, createSelect } from './ui/inputAdders';
 
 import { MouseControl } from './mouseControl.js';
@@ -37,8 +38,15 @@ export function relaxedikDemo() {
     let vrControl = undefined;
     let jointSliders = [];
 
-    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
-        loadRobot(URL.createObjectURL(blob))
+    let sawyerRobotFile; 
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
+        sawyerRobotFile = URL.createObjectURL(blob)
+    });
+
+    let ur5RobotFile;
+    // https://raw.githubusercontent.com/yepw/robot_configs/master 
+    getURDFFromURL("./ur5_description/urdf/ur5_gripper.urdf", (blob) => {
+        ur5RobotFile = URL.createObjectURL(blob)
     });
 
     getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/backgrounds/kitchen%20updated/Kitchen/Kitchen_dynamic/urdf/kitchen_dynamic.urdf", (blob) => {
@@ -69,8 +77,29 @@ export function relaxedikDemo() {
     createText("VR Options:", "inputs", "h3");
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
-    createToggleSwitch ("re-ground", "inputs", "6 DoF", "4 DoF", true);
-    createSelect("controller-vis", "Controller Visualization", "inputs", ['None', 'Controller', 'Pen', 'Hand (Not working)']);
+
+    let robotSwitch = createSelect("robot", "Robot", "inputs", [
+        'None',
+        'Sawyer',
+        'UR5'
+    ]);
+
+    robotSwitch.onchange = function() {
+        switch (robotSwitch.value) {
+            case 'Sawyer':
+                loadRobot(sawyerRobotFile,
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/sawyer_gripper_info.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/sawyer_nn.yaml");
+                break;
+            case 'UR5':
+                loadRobot(ur5RobotFile,
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/ur5_gripper_info.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/ur5_nn.yaml");
+                break;
+            case 'None':
+            default:
+        }
+    }
 
     createBr("inputs");
     createBr("inputs");
@@ -196,7 +225,9 @@ export function relaxedikDemo() {
     target_cursor = new T.Mesh( geometry, material );
     scene.add( target_cursor );
 
-    let loadRobot = (robotFile) => {
+    let loadRobot = (robotFile, robot_info_link, robot_nn_config_link) => {
+        if (window.robot)
+            scene.remove(window.robot);
         const manager = new T.LoadingManager();
         const loader = new URDFLoader(manager);
         loader.load(robotFile, result => {
@@ -205,15 +236,25 @@ export function relaxedikDemo() {
         manager.onLoad = () => {
             scene.add(window.robot);
             window.robot.rotation.x = -Math.PI / 2;
-            window.robot.position.y = .05;
-            window.robot.position.x = .1;
+            // window.robot.position.y = .05;
+            // window.robot.position.x = .1;
             // window.robot.scale.x = 1.15;
             // window.robot.scale.y = 1.15;
             // window.robot.scale.z = 1.15;
             window.robot.traverse(c => {
                 c.castShadow = true;
+                c.recieveShadow = true;
+                if (c.type == "PointLight") {
+                    c.intensity = 0;
+                    c.castShadow = false;
+                    c.distance = 0;
+                }
                 if (c.material) {
-                    c.material.alphaToCoverage = true;
+                    recurseMaterialTraverse(c.material, (material) => {
+                        material.alphaToCoverage = true;
+                        material.transparent = true;
+                        material.side = T.DoubleSide
+                    })
                 }
             });
 
@@ -229,7 +270,7 @@ export function relaxedikDemo() {
             })
 
             init().then( () => {
-                load_config();
+                load_config(robot_info_link, robot_nn_config_link);
             });
         }
     }
@@ -248,7 +289,6 @@ export function relaxedikDemo() {
             window.kitchenStatic = result;
         });
         manager.onLoad = () => {
-            scene.add(window.kitchenStatic);
             kitchenTransformation(window.kitchenStatic);
             window.kitchenStatic.scale.x = 0.87;
             window.kitchenStatic.scale.y = 0.87;
@@ -263,7 +303,6 @@ export function relaxedikDemo() {
             window.kitchenStandard = result;
         });
         manager.onLoad = () => {
-            scene.add(window.kitchenStandard);
             kitchenTransformation(window.kitchenStandard);
             window.kitchenStandard.position.y = 0.8
             window.kitchenStandard.scale.x = 0.87;
@@ -279,23 +318,36 @@ export function relaxedikDemo() {
             window.kitchenDynamic = result;
         });
         manager.onLoad = () => {
-            scene.add(window.kitchenDynamic);
             kitchenTransformation(window.kitchenDynamic);
             window.kitchenDynamic.scale.x = 0.87;
             window.kitchenDynamic.scale.y = 0.87;
             window.kitchenDynamic.scale.z = 0.87;
         }
-
     }
 
-    let taskControl = new TaskControl({ scene, camera });
-    window.taskControl = taskControl;
-    taskControl.init();
+    window.taskControl  = new TaskControl({ scene, camera });
+    let taskSelect = createSelect("tasks", "tasks", "inputs", [
+        'None',
+        'Pick and Place',
+        'Drawing'
+    ]);
+    taskSelect.onchange = function() {
+        switch (taskSelect.value) {
+            case 'Drawing':
+                window.taskControl.curr_task = 'drawing';
+                taskControl.init();
+                break;
+            case 'Pick and Place':
+                window.taskControl.curr_task = 'pickplace';
+                taskControl.init();
+            case 'None':
+            default:
+        }
+    }
 
-    async function load_config() {
-        console.log("loading robot config");
-        let robot_info = yaml.load(await fetch("https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/collision-ik/config/info_files/sawyer_info.yaml").then(response => response.text()));
-        let robot_nn_config = yaml.load(await fetch("https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/collision-ik/config/collision_nn_rust/sawyer_nn.yaml").then(response => response.text()));
+    async function load_config(robot_info_link, robot_nn_config_link) {
+        let robot_info = yaml.load(await fetch(robot_info_link).then(response => response.text()));
+        let robot_nn_config = yaml.load(await fetch(robot_nn_config_link).then(response => response.text()));
 
         // move robot to init config
         let jointArr = Object.entries(window.robot.joints).filter(joint => joint[1]._jointType != "fixed" && joint[1].type != "URDFMimicJoint");
@@ -338,7 +390,7 @@ export function relaxedikDemo() {
             relaxedIK,
             mouseControl,
             controlMapping
-        })
+        });
     }
 
     // function render() {

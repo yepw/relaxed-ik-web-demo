@@ -252,13 +252,14 @@ export class PickAndPlaceBricksTabletop {
         }
     }
 
-    // loadModels() {
-    //     this.drawTable();
-    //     // this.autoGrasp();
-    //     // this.countCollision();
-
-    //     window.task = "pickplacebricktabletop";
-    // }
+    loadModels() {
+        if (window.kitchenDynamic)
+            this.scene.add(window.kitchenDynamic);
+        if (window.kitchenStandard)
+            this.scene.add(window.kitchenStandard);
+        if (window.kitchenStatic)
+            this.scene.add(window.kitchenStatic);
+    }
 
     removeBricks() {
         for (let i=0; i<this.bricks.length; i++) 
@@ -267,6 +268,9 @@ export class PickAndPlaceBricksTabletop {
 
     removeModels() {
         // this.removeTable();
+        this.scene.remove(window.kitchenDynamic);
+        this.scene.remove(window.kitchenStandard);
+        this.scene.remove(window.kitchenStatic);
         this.removeBricks();
         // this.removeAutoGrasp();
     }
@@ -278,8 +282,12 @@ export class PickAndPlaceBricksTabletop {
     // }
 
     init() {
-        this.pubTaskPrepare();
-        // this.loadModels();
+        // this.pubTaskPrepare();
+        this.loadModels();
+    }
+
+    quit() {
+        this.removeModels();
     }
 
     update(ee_pose) {

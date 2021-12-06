@@ -2,15 +2,15 @@ import * as T from 'three';
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-const MARKER_MODEL_PATH = '../models/marker/scene.gltf';
+const TONGS_MODEL_PATH = '../models/tongs/scene.gltf';
 
-class XRMarkerModel extends T.Object3D {
+class XRTongsModel extends T.Object3D {
 
 	constructor() {
 
 		super();
 
-		this.marker = null;
+		this.tongs = null;
 		this.envMap = null;
 
 	}
@@ -47,33 +47,33 @@ class XRMarkerModel extends T.Object3D {
 
 		super.updateMatrixWorld( force );
 
-		if ( ! this.marker ) return;
+		if ( ! this.tongs ) return;
 
 	}
 
 }
 
-function addAssetSceneToMarkerModel( markerModel, scene ) {
+function addAssetSceneToTongsModel( tongsModel, scene ) {
 	// Apply any environment map that the mesh already has set.
-	if ( markerModel.envMap ) {
+	if ( tongsModel.envMap ) {
 		scene.traverse( ( child ) => {
 			if ( child.isMesh ) {
-				child.material.envMap = markerModel.envMap;
+				child.material.envMap = tongsModel.envMap;
 				child.material.needsUpdate = true;
 			}
 		} );
 	}
 
 	// Add the glTF scene to the controllerModel.
-	markerModel.add( scene );
+	tongsModel.add( scene );
 }
 
-class XRMarkerModelFactory {
+class XRTongsModelFactory {
 
 	constructor( gltfLoader = null ) {
 
 		this.gltfLoader = gltfLoader;
-		this.path = MARKER_MODEL_PATH;
+		this.path = TONGS_MODEL_PATH;
 		this._assetCache = {};
 
 		// If a GLTFLoader wasn't supplied to the constructor create a new one.
@@ -82,66 +82,64 @@ class XRMarkerModelFactory {
 		}
 	}
 
-	createMarkerModel( marker ) {
+	createTongsModel( tongs ) {
 
-		const markerModel = new XRMarkerModel();
+		const tongsModel = new XRTongsModel();
 		let scene = null;
 
-		marker.addEventListener( 'connected', ( event ) => {
+		tongs.addEventListener( 'connected', ( event ) => {
 
 			const xrInputSource = event.data;
 
-            markerModel.marker = new Marker(
+            tongsModel.tongs = new Tongs(
                 xrInputSource,
                 this.path
             );
 
-            const cachedAsset = this._assetCache[ markerModel.marker.assetUrl ];
+            const cachedAsset = this._assetCache[ tongsModel.tongs.assetUrl ];
             if ( cachedAsset ) {
-                scene = cachedAsset.scene.children[0].children[0].children[0].children[0].children[0].clone();
-                let scale = 0.011;
+                scene = cachedAsset.scene.clone();
+                let scale = 0.02;
                 scene.scale.set(scale, scale, scale);
-                scene.rotateY( Math.PI ); // up
-                addAssetSceneToMarkerModel( markerModel, scene );
+                scene.rotateY( Math.PI ); 
+                addAssetSceneToTongsModel( tongsModel, scene );
             } else {
                 if ( ! this.gltfLoader ) {
                     throw new Error( 'GLTFLoader not set.' );
                 }
 
                 this.gltfLoader.setPath( '' );
-                this.gltfLoader.load( markerModel.marker.assetUrl, ( asset ) => {
-                    this._assetCache[ markerModel.marker.assetUrl ] = asset;
+                this.gltfLoader.load( tongsModel.tongs.assetUrl, ( asset ) => {
+                    this._assetCache[ tongsModel.tongs.assetUrl ] = asset;
 
-                    // scene = asset.scene.clone();
-                    // only keep the pen itself, remove the pen cap
-                    scene = asset.scene.children[0].children[0].children[0].children[0].children[0].clone();
-					let scale = 0.011;
+					scene = asset.scene.clone();
+					let scale = 0.02;
                     scene.scale.set(scale, scale, scale);
-                    scene.rotateX( - Math.PI / 2); // up  
-                    addAssetSceneToMarkerModel( markerModel, scene );
+                    scene.rotateY( Math.PI ); 
+                    addAssetSceneToTongsModel( tongsModel, scene );
                 },
                 null,
                 () => {
-                    throw new Error( `Asset ${markerModel.marker.assetUrl} missing or malformed.` );
+                    throw new Error( `Asset ${tongsModel.tongs.assetUrl} missing or malformed.` );
                 } );
             }
 		} );
 
-		marker.addEventListener( 'disconnected', () => {
+		tongs.addEventListener( 'disconnected', () => {
 
-			markerModel.marker = null;
-			markerModel.remove( scene );
+			tongsModel.tongs = null;
+			tongsModel.remove( scene );
 			scene = null;
 
 		} );
 
-		return markerModel;
+		return tongsModel;
 
 	}
 
 }
 
-class Marker {
+class Tongs {
     /**
      * @param {Object} xrInputSource - The XRInputSource to build the MotionController around
      * @param {Object} assetUrl
@@ -165,4 +163,4 @@ class Marker {
     }
 }
 
-export { XRMarkerModelFactory };
+export { XRTongsModelFactory };
