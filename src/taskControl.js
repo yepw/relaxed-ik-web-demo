@@ -12,6 +12,7 @@ export class TaskControl {
         this.curr_task = 'pickplace'
 
         this.camera = options.camera;
+        this.round = 0;
 
         const TABLE_HEIGHT = 0.92;
 
@@ -96,6 +97,7 @@ export class TaskControl {
         this.pubRound();
     }
 
+    // this is called about every 5 ms
     update(ee_pose) {
         this.task[this.curr_task].update(ee_pose);
     }

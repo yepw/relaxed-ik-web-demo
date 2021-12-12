@@ -73,6 +73,16 @@ export function relaxedikDemo() {
     createBr("inputs");
     createBr("inputs");
 
+    createText("Task Options:", "inputs", "h3");
+    createSelect("tasks", "Select a task", "inputs", [
+        "PickAndPlaceStatic",
+        "PickAndPlaceDynamic",
+        "PickAndPlaceMoving"
+    ])
+
+    createBr("inputs");
+    createBr("inputs");
+
     createText("VR Options:", "inputs", "h3");
     createToggleSwitch ("stereo", "inputs", "Mono", "Stereo", true);
     createToggleSwitch ("parallax", "inputs", "No Parallax", "Parallax", true);
@@ -372,14 +382,13 @@ export function relaxedikDemo() {
         });
 
         setInterval( function(){ 
+            const curr_ee_abs_three = getCurrEEpose();
             if (mouseControl.step()) {
-                let curr_ee_abs_three = getCurrEEpose();
                 let m4 = T_ROS_to_THREE.clone().multiply( new T.Matrix4().makeRotationFromQuaternion(curr_ee_abs_three.ori));
                 let m3 = new T.Matrix3().setFromMatrix4(m4);
                 controlMapping.updateEEPose(m3);
-
-                taskControl.update(curr_ee_abs_three)
             } 
+            taskControl.update(curr_ee_abs_three)
         }, 5);
 
         window.vrControl = new VrControl({
