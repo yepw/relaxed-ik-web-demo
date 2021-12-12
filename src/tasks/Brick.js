@@ -2,7 +2,7 @@ import * as T from 'three';
 import { rotQuaternion } from "../utils.js";
 import { EE_TO_GRIPPER_OFFSET, EE_TO_THREE_ROT_OFFSET } from "./globals"
 
-const TABLE_HEIGHT = 1.05;
+const TABLE_HEIGHT = 0.92;
 
 export default class Brick {
     constructor(options) {
@@ -119,7 +119,7 @@ export default class Brick {
         gripper.position.copy(new T.Vector3(ee_pose.posi.x, ee_pose.posi.y, ee_pose.posi.z));
         gripper.quaternion.copy(new T.Quaternion(ee_pose.ori.x, ee_pose.ori.y, ee_pose.ori.z, ee_pose.ori.w));
         gripper.quaternion.multiply(EE_TO_THREE_ROT_OFFSET)
-        gripper.translateX(EE_TO_GRIPPER_OFFSET);
+        // gripper.translateX(EE_TO_GRIPPER_OFFSET);
 
         if (!this.grasped && gripper.position.distanceTo(this.brick.position) < 0.02) {
             console.log('Brick grabbed')

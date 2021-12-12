@@ -2,13 +2,17 @@ import * as T from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
+export function getSceneColor() {
+    return new T.Color(0x263238);
+}
+
 export function initScene() {
 
     let scene, camera, renderer, controls;
 
     // scene
     scene = new T.Scene();
-    scene.background = new T.Color(0x263238);
+    scene.background = getSceneColor();
 
     camera = new T.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.001, 1000);
     camera.position.set(3, 3, 3);

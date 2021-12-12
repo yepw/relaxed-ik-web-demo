@@ -5,6 +5,7 @@
 import * as T from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader';
+import Task from './Task'
 
 const BOARD_ANGLE = Math.PI/4;
 
@@ -267,8 +268,9 @@ function castShadow(obj) {
     });
 }
 
-export class DrawingTask {
+export class DrawingTask extends Task{
     constructor(options) {
+        super();
         this.scene = options.scene;
         this.done = false;
         this.penCurves = [];
@@ -301,10 +303,9 @@ export class DrawingTask {
         this.removeBoard();
         this.removePenCurves();
         this.removePen();
-        this.removeTargetCurve();
     }
 
-    pubTaskPrepare() {
+    nextRound() {
         this.removePenCurves();
         if (this.targetCurve)
             this.scene.add(this.targetCurve);
@@ -315,7 +316,12 @@ export class DrawingTask {
     }
 
     quit() {
+        this.reset();
         this.removeModels();
+    }
+
+    reset() {
+        this.removeTargetCurve();   
     }
 
     drawBoard() {

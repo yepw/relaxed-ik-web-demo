@@ -6,7 +6,6 @@ import * as T from 'three';
 import { Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import Task from './Task'
-import Brick from './Brick'
 
 import {
     getBrowser, T_THREE_to_ROS, T_ROS_to_THREE, Line3D, castShadow, rotQuaternion, changeReferenceFrame, quaternionToAxisAngle
@@ -22,48 +21,12 @@ export default class PickAndPlaceStatic extends Task {
         this.bricks = [];
         this.gripper_occupied = false;
         this.scene = options.scene
-
-        this.rounds = [
-            new Brick({
-                init_posi: new T.Vector3(1, 0, 0.2),
-                init_angle: 0,
-                target_posi: new T.Vector3(0.7, 0, 0.75),
-                color: 0xFF0000,
-                target_object: "circle",
-                scene: this.scene
-            }),
-            new Brick({ 
-                init_posi: new T.Vector3(0.8, 0, 0.5), 
-                init_angle: 0, 
-                target_posi: new T.Vector3(1, 0, -0.5), 
-                color: 0xdddd88, 
-                target_object: "circle",
-                scene: this.scene
-            }),
-            new Brick({
-                init_posi: new T.Vector3(1, 0, -0.75), 
-                init_angle: 0, 
-                target_posi: new T.Vector3(0.5, 0, 0.5), 
-                color: 0xFF0000, 
-                target_object: "circle",
-                scene: this.scene
-            })
-        ]
     }
 
-    // draws the current state/round to the scene
-    draw() {
+    nextRound() {
         for (const brick of this.bricks) {
             brick.draw();
         }
-    }
-
-    setRound(num) {
-
-        // this assums that a round consists of only 1 brick
-        this.bricks.push(this.rounds[num]);
-
-        this.draw();
     } 
 
     // removes brick and target from the scene and array
@@ -74,11 +37,22 @@ export default class PickAndPlaceStatic extends Task {
         this.bricks = [];
     }
 
-    // removeModels() {
-    //     this.removeBricks();
-    // }
 
-    init() { }
+    init() {
+        if (window.kitchenDynamic)
+            this.scene.add(window.kitchenDynamic);
+        if (window.kitchenStandard)
+            this.scene.add(window.kitchenStandard);
+        if (window.kitchenStatic)
+            this.scene.add(window.kitchenStatic); 
+    }
+
+    quit() {
+        this.reset();
+        this.scene.remove(window.kitchenDynamic);
+        this.scene.remove(window.kitchenStandard);
+        this.scene.remove(window.kitchenStatic);
+    }
 
     reset() {
         this.removeBricks();

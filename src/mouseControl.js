@@ -316,9 +316,9 @@ export class MouseControl {
         this.rel_rot = rel_rot;
         let step = mathjsMatToThreejsVector3( 
                         this.controlMapping.transform([
-                            y * this.moveTransScale,
-                            x * this.moveTransScale, 
-                            z * this.wheelTransScale]));
+                            y,
+                            x, 
+                            z]));
         if (this.rel_rot) {
             let worldToRobot = new T.Matrix4()
             worldToRobot.set(1, 0,  0, 0, 0, 0, -1, 0, 0, 1,  0, 0, 0, 0,  0, 1);

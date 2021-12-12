@@ -62,23 +62,13 @@ export function relaxedikDemo() {
         loadKitchenStatic(URL.createObjectURL(blob))
     });
 
-    createText("How to control:", "inputs", "h3");
+    // createText("How to control:", "inputs", "h3");
 
-    createText("1. Click the red dot below.", "inputs", "p");
-    createText("2. Move your mouse to control the robot.", "inputs", "p");
-    createText("3. Scroll mouse wheel to move the robot up and down.", "inputs", "p");
-    createText("4. Right-click to switch to rotation mode.", "inputs", "p");
-    createText("5. Press the ESC button on your keyboard to unlock your cursor.", "inputs", "p");
-
-    createBr("inputs");
-    createBr("inputs");
-
-    createText("Task Options:", "inputs", "h3");
-    createSelect("tasks", "Select a task", "inputs", [
-        "PickAndPlaceStatic",
-        "PickAndPlaceDynamic",
-        "PickAndPlaceMoving"
-    ])
+    // createText("1. Click the red dot below.", "inputs", "p");
+    // createText("2. Move your mouse to control the robot.", "inputs", "p");
+    // createText("3. Scroll mouse wheel to move the robot up and down.", "inputs", "p");
+    // createText("4. Right-click to switch to rotation mode.", "inputs", "p");
+    // createText("5. Press the ESC button on your keyboard to unlock your cursor.", "inputs", "p");
 
     createBr("inputs");
     createBr("inputs");

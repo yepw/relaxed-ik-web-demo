@@ -13,10 +13,18 @@ export default class Task {
         throw new Error("Method 'update()' must be implemented");
     }
 
-    setRound(num) {
-        throw new Error("Method 'setRound(num)' must be implemented");
+    nextRound() {
+        throw new Error("Method 'nextRound()' must be implemented");
     }
 
+    init() {
+        throw new Error("Method 'init()' must be implemented");
+    }
+
+    quit() {
+        throw new Error("Method 'quit()' must be implemented");
+    }
+    
     reset() {
         throw new Error("Method 'reset()' must be implemented");
     }

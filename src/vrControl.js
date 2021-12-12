@@ -16,7 +16,6 @@ export class VrControl {
         this.intervalID = undefined;
         this.mouseControl = options.mouseControl
         this.controlMapping = options.controlMapping;
-        this.scale = 20000
 
         this.lastSqueeze = 0;
         this.lastTouchpad = Date.now();
@@ -69,7 +68,6 @@ export class VrControl {
         window.robot.links.finger_tip.add(axesHelper);
         let axesHelper2 = new T.AxesHelper(5);
         this.controllerGrip1.add(axesHelper2);
-
     }
 
     squeeze() {
@@ -95,9 +93,9 @@ export class VrControl {
             this.intervalID = setInterval(() => {
                 let curr = this.getPose(this.controllerGrip1)
 
-                let x = (curr.x - prev.x) * this.scale
-                let y = (curr.y - prev.y) * (this.scale / 370)
-                let z = (curr.z - prev.z) * this.scale
+                let x = (curr.x - prev.x);
+                let y = (curr.y - prev.y);
+                let z = (curr.z - prev.z);
 
                 let r = new T.Quaternion();
                 if (this.rel_rot) {
@@ -125,7 +123,7 @@ export class VrControl {
 
     gamepad_backward() {
         if (window.taskControl)
-            window.taskControl.finished();
+            window.taskControl.finishRound();
     }
     
     gamepad_forward() {
