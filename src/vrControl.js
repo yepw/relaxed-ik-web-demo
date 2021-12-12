@@ -14,7 +14,7 @@ export class VrControl {
         this.scene = options.scene
         this.camera = options.camera;
         this.intervalID = undefined;
-        this.mouseControl = options.mouseControl
+        this.mouseControl = window.mouseControl
         this.controlMapping = options.controlMapping;
 
         this.lastSqueeze = 0;

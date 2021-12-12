@@ -445,4 +445,13 @@ export class MouseControl {
         return false;
     };
 
+    updateFingerTip(x, y, z) {
+        window.robot.links.finger_tip.parent.position.x += x;
+        window.robot.links.finger_tip.parent.position.y += y;
+        window.robot.links.finger_tip.parent.position.z += z;
+        this.relaxedIK.update_finger_tip(x, y, z);
+        this.reset();
+        this.init_ee_abs_three = getCurrEEpose();
+    }
+
 };

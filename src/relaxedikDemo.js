@@ -34,7 +34,6 @@ export function relaxedikDemo() {
     camera.lookAt(0, 1, 0);
 
     window.robot = {};
-    let mouseControl = undefined;
     window.vrControl = undefined;
     let jointSliders = [];
 
@@ -363,7 +362,7 @@ export function relaxedikDemo() {
 
         let relaxedIK = new RelaxedIK(robot_info, robot_nn_config);
         
-        mouseControl = new MouseControl({
+        window.mouseControl = new MouseControl({
             relaxedIK: relaxedIK,
             jointSliders: jointSliders,
             robot_info: robot_info,
@@ -373,7 +372,7 @@ export function relaxedikDemo() {
 
         setInterval( function(){ 
             const curr_ee_abs_three = getCurrEEpose();
-            if (mouseControl.step()) {
+            if (window.mouseControl.step()) {
                 let m4 = T_ROS_to_THREE.clone().multiply( new T.Matrix4().makeRotationFromQuaternion(curr_ee_abs_three.ori));
                 let m3 = new T.Matrix3().setFromMatrix4(m4);
                 controlMapping.updateEEPose(m3);
@@ -386,7 +385,6 @@ export function relaxedikDemo() {
             scene,
             camera,
             relaxedIK,
-            mouseControl,
             controlMapping
         });
     }

@@ -1,5 +1,5 @@
 /**
- * @author Yeping Wang 
+ * @author Yeping Wang
  */
 
 import * as T from 'three';
@@ -33,7 +33,7 @@ export class circleCurve extends T.Line {
             linewidth: 4
         });
 
-        let circleGeometry = new T.CircleGeometry( 0.3, 64 );                
+        let circleGeometry = new T.CircleGeometry( 0.3, 64 );
         let circle_points = Array.from(circleGeometry.getAttribute('position').array);
         circle_points.shift();
         circle_points.shift();
@@ -60,13 +60,13 @@ export class rectCurve extends T.Line{
             linewidth: 4
         });
 
-        let rect_points = [ 
+        let rect_points = [
             new T.Vector3(-0.18, -0.1, 0),
             new T.Vector3(-0.18, 0.15, 0),
             new T.Vector3(0.32, 0.15, 0),
             new T.Vector3(0.32, -0.1, 0)
         ]
-        
+
         let points = [];
         for (let i=0; i<rect_points.length; i++) {
             let point = rect_points[i].clone();
@@ -109,11 +109,11 @@ export class SVGCurve extends T.Group{
                         let points = [];
                         for (let i=0; i<points2d.length; i++) {
                             let point = new T.Vector3( points2d[i].x - 0.18 - 49.42 * factor,
-                                                            - points2d[i].y - 0.1 + 543.29 * factor, 
+                                                            - points2d[i].y - 0.1 + 543.29 * factor,
                                                             0);
                             points.push( boardTransform(point) );
                         }
-            
+
                         let geometry = new T.BufferGeometry().setFromPoints(points);
                         let mesh = new T.Line(geometry, material);
                         that.add(mesh);
@@ -143,7 +143,7 @@ function resizeBezierCurve(orig_curve, factor) {
 }
 
 class eeCurve {
-    constructor(options) { 
+    constructor(options) {
         // https://stackoverflow.com/questions/31399856/drawing-a-line-with-three-js-dynamically/31411794#31411794
         options = options || {};
         options.maxPoints = options.maxPoints || 5000;
@@ -197,7 +197,7 @@ class eeCurve {
         //https://stackoverflow.com/questions/15690103/intersection-between-two-lines-in-coordinates/15692290#15692290
         let d = (a2.x - a1.x)*(b2.y - b1.y) - (a2.y - a1.y)*(b2.x - b1.x);
         if (Math.abs(d) < 1e-6)
-            return false; 
+            return false;
         let u = ((b1.x - a1.x)*(b2.y - b1.y) - (b1.y - a1.y)*(b2.x - b1.x))/d;
         let v = ((b1.x - a1.x)*(a2.y - a1.y) - (b1.y - a1.y)*(a2.x - a1.x))/d;
         if (u < 0.0 || u > 1.0)
@@ -216,7 +216,7 @@ class eeCurve {
         this.a1 = {x:cx, y:cy};
         this.rayCounter = [];
         this.angle = Math.PI/10;
-        for (let i=Math.PI * 2 / this.angle - 1; i>=0; i--) 
+        for (let i=Math.PI * 2 / this.angle - 1; i>=0; i--)
             this.rayCounter[i] = 0;
     }
 
@@ -321,7 +321,7 @@ export class DrawingTask extends Task{
     }
 
     reset() {
-        this.removeTargetCurve();   
+        this.removeTargetCurve();
     }
 
     drawBoard() {
@@ -337,7 +337,7 @@ export class DrawingTask extends Task{
                     that.board.position.x = 0.65;
                     that.board.position.y = -0.1;
                     that.board.position.z = -0.1;
-                
+
                     that.board.children[0].children[0].children[0]
                         .children[0].children[0].children[0].scale.set(1, 0.79, 1);
                     that.board.children[0].children[0].children[0]
@@ -348,10 +348,10 @@ export class DrawingTask extends Task{
                     that.board.children[0].children[0].children[0]
                         .children[0].children[0].children[1].position.set(-8, 1, 0);
                     that.board.children[0].children[0].children[0]
-                        .children[0].children[0].children[1].children[2].material = 
+                        .children[0].children[0].children[1].children[2].material =
                             new T.MeshStandardMaterial({ color: 0xffffff } );
-                    
-                    castShadow(that.board);	
+
+                    castShadow(that.board);
                     that.board.children[0].castShadow = true;
                     that.board.children[0].receiveShadow = true;
                     that.scene.add(that.board);
@@ -378,7 +378,7 @@ export class DrawingTask extends Task{
             this.scene.remove(this.targetCurve);
     }
 
-    drawPen() { 
+    drawPen() {
         let that = this;
         if (!this.pen) {
             let loader = new GLTFLoader();
@@ -388,9 +388,9 @@ export class DrawingTask extends Task{
                     that.pen = gltf.scene.children[0].children[0].children[0].children[0].children[0].clone();
                     let scale = 0.011;
                     that.pen.scale.set(scale, scale, scale);
-                    that.pen.rotateX( Math.PI / 2); // up  
+                    that.pen.rotateX( Math.PI / 2); // up
                     that.pen.position.set(0.0, 0.0, -0.085);
-                    castShadow(that.pen);	
+                    castShadow(that.pen);
                     window.robot.links.finger_tip.add(that.pen);
                 },
                 function (xhr) {
@@ -404,7 +404,7 @@ export class DrawingTask extends Task{
             window.robot.links.finger_tip.add(that.pen);
         }
 
-        // close gripper
+        // close the gripper & change finger_tip position
         let robot = document.getElementById('robot-select').value;
         switch (robot) {
             case 'Sawyer':
@@ -412,6 +412,7 @@ export class DrawingTask extends Task{
                 break;
             case 'UR5':
                 window.robot.setJointValue('finger_joint',  0.60);
+                window.mouseControl.updateFingerTip(0, 0.0277, 0);
                 break;
             default:
         }
@@ -420,24 +421,37 @@ export class DrawingTask extends Task{
     removePen() {
         if (this.pen)
             window.robot.links.finger_tip.remove(this.pen);
+        
+        // open the gripper & change finger_tip position
+        let robot = document.getElementById('robot-select').value;
+        switch (robot) {
+            case 'Sawyer':
+                window.robot.setJointValue('right_gripper_l_finger_joint',  0.1);
+                break;
+            case 'UR5':
+                window.robot.setJointValue('finger_joint',  0.0);
+                window.mouseControl.updateFingerTip(0, -0.0277, 0);
+                break;
+            default:
+        }
     }
 
     update(ee_pose) {
         let ee_posi = ee_pose.posi;
-        // position in board coordinate 
+        // position in board coordinate
         let ee_posi_board =  boardTransform( ee_posi, true);
 
         // pen_tip close enough to the board
-        if (ee_posi_board.z > 0 && ee_posi_board.z < 0.05) { 
+        if (ee_posi_board.z > 0 && ee_posi_board.z < 0.05) {
             if (!this.currPenCurve)
                 this.currPenCurve = this.drawPenCurve();
 
             // project
             ee_posi_board.z = 0;
-            
+
             // transform it back to world coordinate
-            let ee_posi_world =  boardTransform (ee_posi_board ); 
-            
+            let ee_posi_world =  boardTransform (ee_posi_board );
+
             this.currPenCurve.add2DPoint(ee_posi_board.x, ee_posi_board.y);
             this.currPenCurve.addPoint(
                 ee_posi_world.x, ee_posi_world.y, ee_posi_world.z)
@@ -445,6 +459,6 @@ export class DrawingTask extends Task{
             if (this.currPenCurve)
                 this.currPenCurve = undefined;
         }
-       
+
     }
 }
