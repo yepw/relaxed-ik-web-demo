@@ -6,11 +6,12 @@ import Brick from './tasks/Brick'
 export class TaskControl {
     constructor(options) {
         this.scene = options.scene
-        this.task = {
+        this.tasks = {
             'pickplace': new PickAndPlaceStatic ({ scene: this.scene }),
             'drawing': new DrawingTask({ scene: this.scene })
         };
-        this.curr_task = 'pickplace'
+        this.curr_task_name = 'pickplace'
+        this.curr_task = undefined;
 
         this.camera = options.camera;
         this.round = 0;
@@ -59,7 +60,7 @@ export class TaskControl {
     }
         
     finishRound() {
-        if (this.curr_round < this.rounds[this.curr_task].length) {
+        if (this.curr_round < this.rounds[this.curr_task_name].length) {
             this.curr_round ++;
         } else {
             // alert('All tasks are completed');
@@ -69,15 +70,15 @@ export class TaskControl {
     }
 
     nextRound() {
-        let task = this.task[this.curr_task];
+        let task = this.curr_task;
         task.reset();
-        switch (this.curr_task) {
+        switch (this.curr_task_name) {
             case 'drawing':
-                task.targetCurve = this.rounds[this.curr_task][this.curr_round];
+                task.targetCurve = this.rounds[this.curr_task_name][this.curr_round];
                 break;
             case 'pickplace':
                 task.rounds = [];
-                this.rounds[this.curr_task][this.curr_round].forEach((brick) => {
+                this.rounds[this.curr_task_name][this.curr_round].forEach((brick) => {
                     task.bricks.push(brick);
                 });
         }
@@ -87,15 +88,16 @@ export class TaskControl {
 
     init() {
         this.curr_round = 0
-        if (this.prev_task)
-            this.task[this.prev_task].quit();
-        this.prev_task = this.curr_task;
-        this.task[this.curr_task].init();
+        if (this.curr_task)
+            this.curr_task.quit();
+        this.curr_task = this.tasks[this.curr_task_name];
+        this.curr_task.init();
         this.nextRound();
     }
 
     // this is called about every 5 ms
     update(ee_pose) {
-        this.task[this.curr_task].update(ee_pose);
+        if (this.curr_task)
+            this.curr_task.update(ee_pose);
     }
 }

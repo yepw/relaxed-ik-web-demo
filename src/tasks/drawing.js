@@ -8,10 +8,11 @@ import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader';
 import Task from './Task'
 
 const BOARD_ANGLE = Math.PI/4;
+const SNAPPING_THOLD = 0.05;
 
 function boardTransform(point, invert = false) {
-    // if invert == true, point is in world frame
-    // if invert == false, point is in board frame
+    // if invert == true, point is in the world frame
+    // if invert == false, point is in the board frame
 
     //  the transformation from world to board
     let transform = new T.Matrix4().compose(
@@ -436,13 +437,20 @@ export class DrawingTask extends Task{
         }
     }
 
+    snapping(ee_goal_abs_three) {
+        let tmp = boardTransform( ee_goal_abs_three.posi.clone(), true);
+        if ( Math.abs(tmp.z) < SNAPPING_THOLD )
+            tmp.z = 0;
+        ee_goal_abs_three.posi = boardTransform(tmp, false);
+    }
+
     update(ee_pose) {
         let ee_posi = ee_pose.posi;
         // position in board coordinate
         let ee_posi_board =  boardTransform( ee_posi, true);
 
         // pen_tip close enough to the board
-        if (ee_posi_board.z > 0 && ee_posi_board.z < 0.05) {
+        if (ee_posi_board.z > -0.01 && ee_posi_board.z < 0.01) {
             if (!this.currPenCurve)
                 this.currPenCurve = this.drawPenCurve();
 

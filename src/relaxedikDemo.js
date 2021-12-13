@@ -104,7 +104,8 @@ export function relaxedikDemo() {
 
     createText("Options:", "inputs", "h3");
     createToggleSwitch ("cursor-or-robot", "inputs", "Move robot", "Move cursor", true);
-    createToggleSwitch ("show-cursor", "inputs", "Hide cursor", "Show cursor", true);
+    createToggleSwitch ("show-cursor", "inputs", "Hide cursor", "Show cursor", false);
+    createToggleSwitch ("snapping", "inputs", "Snapping Off", "On", false);
 
     createCanvas("mouse-control", "bottomDiv");
 
@@ -332,12 +333,12 @@ export function relaxedikDemo() {
     taskSelect.onchange = function() {
         switch (taskSelect.value) {
             case 'Drawing':
-                window.taskControl.curr_task = 'drawing';
-                taskControl.init();
+                window.taskControl.curr_task_name = 'drawing';
+                window.taskControl.init();
                 break;
             case 'Pick and Place':
-                window.taskControl.curr_task = 'pickplace';
-                taskControl.init();
+                window.taskControl.curr_task_name = 'pickplace';
+                window.taskControl.init();
             case 'None':
             default:
         }

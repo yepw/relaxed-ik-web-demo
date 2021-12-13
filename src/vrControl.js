@@ -99,9 +99,9 @@ export class VrControl {
 
                 let r = new T.Quaternion();
                 if (this.rel_rot) {
-                    let q1 = prev.r.clone()
-                    let q2 = curr.r.clone()
-                    r.multiplyQuaternions(q2, q1.invert())
+                    let q1 = prev.r.clone();
+                    let q2 = curr.r.clone();
+                    r.multiplyQuaternions(q2, q1.invert());
                 } else {
                     r = curr.r.clone();
                 }

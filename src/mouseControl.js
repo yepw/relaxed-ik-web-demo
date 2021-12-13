@@ -15,6 +15,7 @@ export class MouseControl {
         this.jointSliders = options.jointSliders;
         this.robotInfo = options.robot_info;
         this.target_cursor = options.target_cursor;
+        this.target_cursor.visible  = false;
         this.controlMapping = options.controlMapping;
 
         this.moveTransScale;
@@ -98,6 +99,17 @@ export class MouseControl {
         this.updateRates = [];
         this.relaxedIKRates = [];
         this.preStepTime = undefined;
+        
+        // snapping
+        this.snapping = false;
+        const snappingToggle = document.getElementById('snapping-toggle');
+        snappingToggle.onclick = function () {
+            console.log(this.checked);
+            if (this.checked) 
+                that.snapping  = true;
+            else
+                that.snapping  = false;
+        }; 
     }
 
     resizeCanvas() {
@@ -319,18 +331,15 @@ export class MouseControl {
                             y,
                             x, 
                             z]));
+
+        let r_ros = changeReferenceFrame({"posi": new T.Vector3(), "ori": r.clone()}, this.T_ROS_to_THREE).ori;
+
         if (this.rel_rot) {
-            let worldToRobot = new T.Matrix4()
-            worldToRobot.set(1, 0,  0, 0, 0, 0, -1, 0, 0, 1,  0, 0, 0, 0,  0, 1);
-
-            let robot_r = rotQuaternion(r, worldToRobot);
-
-            this.ee_goal_rel_ros.ori.premultiply(robot_r)
+            this.ee_goal_rel_ros.ori.premultiply(r_ros);
         } else { 
-            let ee_rel_goal_ros = changeReferenceFrame({"posi": new T.Vector3(), "ori": r.clone()}, this.T_ROS_to_THREE);
             
             // for contoller, z is pointing back; for end-effector, z is pointing forward
-            let r_updated = ee_rel_goal_ros.ori.clone().multiply( new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2, 0., -Math.PI/2)));
+            let r_updated = r_ros.clone().multiply( new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2, 0., -Math.PI/2)));
             this.ee_goal_rel_ros.ori = r_updated;
         }
 
@@ -345,8 +354,8 @@ export class MouseControl {
 
     absToRel(abs_pose, init_pose) {
         return {
-            "posi": abs_pose.posi.clone().add( init_pose.posi.clone().negate() ),
-            "ori": abs_pose.ori.clone().premultiply(init_pose.ori.clone().invert()) };
+            "posi": abs_pose.posi.clone().add( init_pose.posi.clone().negate()),
+            "ori": init_pose.ori.clone().invert().premultiply(abs_pose.ori)};
     }
     
     step() {
@@ -359,17 +368,26 @@ export class MouseControl {
         }
         this.preStepTime = currStepTime;
 
-        let curr_ee_abs_three  = getCurrEEpose();
-        let ee_goal_rel_ros = this.ee_goal_rel_ros;
-        let init_ee_abs_three = this.init_ee_abs_three;
+        let ee_goal_rel_ros = {"posi": this.ee_goal_rel_ros.posi.clone(),
+                                "ori": this.ee_goal_rel_ros.ori.clone()};
         
         // convert ee_goal from ROS reference frame to THREE reference frame
         let ee_goal_rel_three = changeReferenceFrame(ee_goal_rel_ros, this.T_THREE_to_ROS);
-        let ee_goal_abs_three = this.relToAbs(ee_goal_rel_three, init_ee_abs_three);
+        let ee_goal_abs_three = this.relToAbs(ee_goal_rel_three,  this.init_ee_abs_three);
+
+        // snapping the tool tip in the constrained subspace
+        if (this.snapping && window.taskControl.curr_task) {
+            if (window.taskControl.curr_task.snapping) {
+                window.taskControl.curr_task.snapping(ee_goal_abs_three);
+                ee_goal_rel_three = this.absToRel(ee_goal_abs_three,  this.init_ee_abs_three);
+                ee_goal_rel_ros = changeReferenceFrame(ee_goal_rel_three, this.T_ROS_to_THREE);
+            }
+        }
 
         this.target_cursor.position.copy( ee_goal_abs_three.posi );
         this.target_cursor.matrixWorldNeedsUpdate = true;
 
+        let curr_ee_abs_three  = getCurrEEpose();
         // distance difference
         let d = curr_ee_abs_three.posi.distanceTo( ee_goal_abs_three.posi  );
         // angle difference
