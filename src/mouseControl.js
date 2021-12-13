@@ -408,8 +408,8 @@ export class MouseControl {
                         ee_goal_rel_ros.posi.y,
                         ee_goal_rel_ros.posi.z],
                         [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
-                        3,
-                        [0., 0., 1.],
+                        [1., 0., 0., 0., 1., 0., 0., 0., 1.],
+                        [0, 0, 0],
                         true,
                         true);
             } else {
