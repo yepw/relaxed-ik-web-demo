@@ -375,13 +375,19 @@ export class MouseControl {
         let ee_goal_rel_three = changeReferenceFrame(ee_goal_rel_ros, this.T_THREE_to_ROS);
         let ee_goal_abs_three = this.relToAbs(ee_goal_rel_three,  this.init_ee_abs_three);
 
-        // snapping the tool tip in the constrained subspace
-        if (this.snapping && window.taskControl.curr_task) {
-            if (window.taskControl.curr_task.snapping) {
-                window.taskControl.curr_task.snapping(ee_goal_abs_three);
-                ee_goal_rel_three = this.absToRel(ee_goal_abs_three,  this.init_ee_abs_three);
-                ee_goal_rel_ros = changeReferenceFrame(ee_goal_rel_three, this.T_ROS_to_THREE);
+        if (window.taskControl.curr_task) {
+            // making sure the pen can't go through the board
+            if (window.taskControl.curr_task.collision)  {
+                let tmp = window.taskControl.curr_task.collision(ee_goal_abs_three);
+                let tmp_ee_rel_three = this.absToRel(tmp,  this.init_ee_abs_three);
+                this.ee_goal_rel_ros= changeReferenceFrame(tmp_ee_rel_three, this.T_ROS_to_THREE);
             }
+
+            // snapping the tool tip in the constrained subspace
+            if (this.snapping &&  window.taskControl.curr_task.snapping) 
+                window.taskControl.curr_task.snapping(ee_goal_abs_three);
+            ee_goal_rel_three = this.absToRel(ee_goal_abs_three,  this.init_ee_abs_three);
+            ee_goal_rel_ros = changeReferenceFrame(ee_goal_rel_three, this.T_ROS_to_THREE);
         }
 
         this.target_cursor.position.copy( ee_goal_abs_three.posi );

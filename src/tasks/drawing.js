@@ -21,9 +21,9 @@ function boardTransform(point, invert = false) {
             new T.Euler(-Math.PI/2, -BOARD_ANGLE, -Math.PI/2)),
         new T.Vector3(1, 1, 1));
     if (invert)
-        return point.applyMatrix4(transform.invert())
+        return point.clone().applyMatrix4(transform.invert())
     else
-        return point.applyMatrix4(transform)
+        return point.clone().applyMatrix4(transform)
 }
 
 export class circleCurve extends T.Line {
@@ -149,7 +149,7 @@ class eeCurve {
         options = options || {};
         options.maxPoints = options.maxPoints || 5000;
         options.color = options.color || 0xff0000;
-        options.lineWidth = options.lineWidth || 2;
+        options.lineWidth = options.lineWidth || 10;
 
         this.scene = options.scene;
 
@@ -437,11 +437,30 @@ export class DrawingTask extends Task{
         }
     }
 
+    collision(ee_goal_abs_three) {
+        let posi = ee_goal_abs_three.posi.clone();
+        let ori = ee_goal_abs_three.ori.clone();
+        let tmp = boardTransform( posi, true);
+        let z = tmp.z;
+        if ( z < 0) {
+            tmp.z = 0;
+            ee_goal_abs_three.posi = boardTransform(tmp, false);
+            if (z < -0.03) {
+                tmp.z = -0.03;
+                return {"posi": boardTransform(tmp, false), 
+                        "ori": ori};
+            }
+        }
+        return {"posi": posi, 
+                "ori": ori};
+    }
+
     snapping(ee_goal_abs_three) {
         let tmp = boardTransform( ee_goal_abs_three.posi.clone(), true);
-        if ( Math.abs(tmp.z) < SNAPPING_THOLD )
+        if ( Math.abs(tmp.z) < SNAPPING_THOLD ) {
             tmp.z = 0;
-        ee_goal_abs_three.posi = boardTransform(tmp, false);
+            ee_goal_abs_three.posi = boardTransform(tmp, false);
+        }
     }
 
     update(ee_pose) {
