@@ -3,7 +3,7 @@ import URDFLoader from 'urdf-loader';
 import { initScene } from './sceneInit';
 import { getURDFFromURL } from './robotFunctions/loaderHelper';
 import { recurseMaterialTraverse } from './robotFunctions/robotHelpers';
-import { createSlider, createCanvas, createText, createToggleSwitch, createBr, createSelect } from './ui/inputAdders';
+import { createSlider, createCanvas, createText, createToggleSwitch, createBr, createSelect, createButton } from './ui/inputAdders';
 
 import { MouseControl } from './mouseControl.js';
 import { VrControl } from './vrControl.js'
@@ -101,6 +101,14 @@ export function relaxedikDemo() {
 
     createBr("inputs");
     createBr("inputs");
+
+    createButton("next-tool", "inputs", "next-tool", function() {
+        window.vrControl.arsenal.next_tool();
+    })
+
+    createButton("prev-tool", "inputs", "prev-tool", function() {
+        window.vrControl.arsenal.next_tool();
+    })
 
     createText("Options:", "inputs", "h3");
     createToggleSwitch ("cursor-or-robot", "inputs", "Move robot", "Move cursor", true);

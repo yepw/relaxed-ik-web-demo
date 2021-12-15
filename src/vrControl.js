@@ -106,7 +106,7 @@ export class VrControl {
                     r = curr.r.clone();
                 }
 
-                this.arsenal.onControllerMove(x, z, y, r, this.rel_rot)
+                this.arsenal.onControllerMove(x, z, y, r)
 
                 prev = curr
             }, 5);

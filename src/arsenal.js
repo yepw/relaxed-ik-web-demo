@@ -166,11 +166,14 @@ export class Arsenal {
     }
 
     change_tool() {
-        if (this.curr_tool_id == 1) 
+        if (this.curr_tool_id == 1) {
+            window.mouseControl.rel_rot = false;
             window.vrControl.rel_rot = false;
-        else
+        } else {
+            window.mouseControl.rel_rot = true;
             window.vrControl.rel_rot = true;
-
+        }
+        
         for (let i=0; i<this.tools.length; i++) {
             if (i==this.curr_tool_id)
                 this.controllerGrip.add(this.tools[i].model);
@@ -190,8 +193,8 @@ export class Arsenal {
         this.mouseControl.reset();
     }
 
-    onControllerMove(x, z, y, r, rel_rot) {
-        this.mouseControl.onControllerMove(x, z, y, r, rel_rot);
+    onControllerMove(x, z, y, r) {
+        this.mouseControl.onControllerMove(x, z, y, r);
     }
 }
 

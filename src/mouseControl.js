@@ -319,13 +319,12 @@ export class MouseControl {
         }
     }
 
-    onControllerMove(x, y, z, r, rel_rot = true) {
+    onControllerMove(x, y, z, r) {
         // if (!this.moveCursorNotRobot) {
         //     let curr_ee_abs_three =  getCurrEEpose();
         //     let curr_ee_rel_three = this.absToRel(curr_ee_abs_three, this.init_ee_abs_three);
         //     this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, this.T_ROS_to_THREE);
         // } 
-        this.rel_rot = rel_rot;
         let step = mathjsMatToThreejsVector3( 
                         this.controlMapping.transform([
                             y,
@@ -408,8 +407,8 @@ export class MouseControl {
                         ee_goal_rel_ros.posi.y,
                         ee_goal_rel_ros.posi.z],
                         [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
-                        3,
                         [0., 0., 1.],
+                        0,
                         true,
                         true);
             } else {
@@ -418,8 +417,8 @@ export class MouseControl {
                     ee_goal_rel_ros.posi.y,
                     ee_goal_rel_ros.posi.z],
                     [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
-                    2,
                     [0., 0., 1.],
+                    2,
                     true,
                     false);
             }
