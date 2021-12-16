@@ -15,7 +15,11 @@ export class MouseControl {
         this.jointSliders = options.jointSliders;
         this.robotInfo = options.robot_info;
         this.target_cursor = options.target_cursor;
-        this.target_cursor.visible  = false;
+        
+        // this.target_cursor.visible  = false;
+        let axesHelper = new T.AxesHelper(5);
+        this.target_cursor.add(axesHelper);
+
         this.controlMapping = options.controlMapping;
 
         this.moveTransScale;
@@ -391,6 +395,7 @@ export class MouseControl {
         }
 
         this.target_cursor.position.copy( ee_goal_abs_three.posi );
+        this.target_cursor.quaternion.copy( ee_goal_abs_three.ori );
         this.target_cursor.matrixWorldNeedsUpdate = true;
 
         let curr_ee_abs_three  = getCurrEEpose();
@@ -409,9 +414,9 @@ export class MouseControl {
                         ee_goal_rel_ros.posi.z],
                         [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
                         [1., 0., 0., 0., 1., 0., 0., 0., 1.],
-                        [0, 0, 0],
+                        [0, 0, 1],
                         true,
-                        true);
+                        false);
             } else {
                 res = this.relaxedIK.solve ([
                     ee_goal_rel_ros.posi.x,
