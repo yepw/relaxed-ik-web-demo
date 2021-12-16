@@ -87,12 +87,14 @@ export function relaxedikDemo() {
             case 'Sawyer':
                 loadRobot(sawyerRobotFile,
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/sawyer_gripper_info.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/sawyer_nn.yaml");
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/sawyer_nn.yaml",
+                    "./env_settings.yaml");
                 break;
             case 'UR5':
                 loadRobot(ur5RobotFile,
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/ur5_gripper_info.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/ur5_nn.yaml");
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/ur5_nn.yaml",
+                    "./env_settings.yaml");
                 break;
             case 'None':
             default:
@@ -232,7 +234,7 @@ export function relaxedikDemo() {
     target_cursor = new T.Mesh( geometry, material );
     scene.add( target_cursor );
 
-    let loadRobot = (robotFile, robot_info_link, robot_nn_config_link) => {
+    let loadRobot = (robotFile, robot_info_link, robot_nn_config_link, env_settings_link) => {
         if (window.robot)
             scene.remove(window.robot);
         const manager = new T.LoadingManager();
@@ -277,7 +279,7 @@ export function relaxedikDemo() {
             })
 
             init().then( () => {
-                load_config(robot_info_link, robot_nn_config_link);
+                load_config(robot_info_link, robot_nn_config_link, env_settings_link);
             });
         }
     }
@@ -352,9 +354,10 @@ export function relaxedikDemo() {
         }
     }
 
-    async function load_config(robot_info_link, robot_nn_config_link) {
+    async function load_config(robot_info_link, robot_nn_config_link, env_settings_link) {
         let robot_info = yaml.load(await fetch(robot_info_link).then(response => response.text()));
         let robot_nn_config = yaml.load(await fetch(robot_nn_config_link).then(response => response.text()));
+        let env_settings = yaml.load(await fetch(env_settings_link).then(response => response.text()));
 
         // move robot to init config
         let jointArr = Object.entries(window.robot.joints).filter(joint => joint[1]._jointType != "fixed" && joint[1].type != "URDFMimicJoint");
@@ -369,7 +372,7 @@ export function relaxedikDemo() {
             }
         })    
 
-        let relaxedIK = new RelaxedIK(robot_info, robot_nn_config);
+        let relaxedIK = new RelaxedIK(robot_info, robot_nn_config, env_settings);
         
         window.mouseControl = new MouseControl({
             relaxedIK: relaxedIK,
