@@ -10,11 +10,13 @@ import { VrControl } from './vrControl.js'
 
 import init, {RelaxedIK} from "../relaxed_ik_web/pkg/relaxed_ik_web.js";
 import * as yaml from 'js-yaml';
-import { getCurrEEpose } from './utils';
+import { getCurrEEpose, changeReferenceFrame,
+        T_ROS_to_THREE, T_THREE_to_ROS, } from './utils';
 import { ControlMapping} from './controlMapping';
 import { create } from 'mathjs';
 
 import { TaskControl } from './taskControl.js'
+import { Euler } from 'three';
 
 export function relaxedikDemo() {
 
@@ -88,13 +90,13 @@ export function relaxedikDemo() {
                 loadRobot(sawyerRobotFile,
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/sawyer_gripper_info.yaml",
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/sawyer_nn.yaml",
-                    "./env_settings.yaml");
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/sawyer_description/env_settings.yaml");
                 break;
             case 'UR5':
                 loadRobot(ur5RobotFile,
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/ur5_gripper_info.yaml",
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/ur5_nn.yaml",
-                    "./env_settings.yaml");
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/ur5_description/env_settings.yaml");
                 break;
             case 'None':
             default:
@@ -359,6 +361,8 @@ export function relaxedikDemo() {
         let robot_nn_config = yaml.load(await fetch(robot_nn_config_link).then(response => response.text()));
         let env_settings = yaml.load(await fetch(env_settings_link).then(response => response.text()));
 
+        vis_env_collision(env_settings);
+
         // move robot to init config
         let jointArr = Object.entries(window.robot.joints).filter(joint => joint[1]._jointType != "fixed" && joint[1].type != "URDFMimicJoint");
         jointArr.forEach( joint => {
@@ -399,6 +403,37 @@ export function relaxedikDemo() {
             relaxedIK,
             controlMapping
         });
+    }
+
+    function vis_env_collision(env_settings) {
+        const material = new T.MeshBasicMaterial( { color: 0xff00ff } );
+        material.transparent = true;
+        material.opacity = 0.6;
+        if (env_settings.spheres) {
+            env_settings.spheres.forEach( (sphere) => {
+                const geometry = new T.SphereGeometry(sphere.scale, 32, 16);
+                const mesh = new T.Mesh( geometry, material );
+                let pose_ros = {"posi": new T.Vector3(sphere.translation[0], sphere.translation[1], sphere.translation[2] + 0.9),
+                                "ori": new T.Quaternion()};
+                let pose_three = changeReferenceFrame(pose_ros, T_THREE_to_ROS);
+                mesh.position.copy(pose_three.posi);
+                scene.add (mesh);
+            })
+        }
+        if (env_settings.cuboids) {
+            env_settings.cuboids.forEach( (cuboid) => {
+                const geometry = new T.BoxGeometry(cuboid.scale[0], cuboid.scale[2], cuboid.scale[1]);
+                const mesh = new T.Mesh( geometry, material );
+                let pose_ros = {"posi": new T.Vector3(cuboid.translation[0], cuboid.translation[1], cuboid.translation[2] + 0.9),
+                                "ori": new T.Quaternion().setFromEuler(new Euler(
+                                    cuboid.rotation[0], cuboid.rotation[1], cuboid.rotation[2]
+                                ))};
+                let pose_three = changeReferenceFrame(pose_ros, T_THREE_to_ROS);
+                mesh.position.copy(pose_three.posi);
+                mesh.quaternion.copy(pose_three.ori);
+                scene.add (mesh);
+            })
+        }
     }
 
     // function render() {

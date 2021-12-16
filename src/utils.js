@@ -133,6 +133,18 @@ export function getBrowser() {
 }
 
 // transformation from ROS' reference frame to THREE's reference frame
-export let T_ROS_to_THREE = new T.Matrix4().makeRotationFromEuler(new T.Euler(1.57079632679, 0., 0.));
+export let T_ROS_to_THREE = new T.Matrix4().makeRotationFromEuler(new T.Euler(Math.PI/2, 0., 0.));
 // transformation from THREE' reference frame to ROS's reference frame
 export let T_THREE_to_ROS = T_ROS_to_THREE.clone().invert();
+
+export function relToAbs(rel_pose, init_pose) {
+    return {
+        "posi": init_pose.posi.clone().add(rel_pose.posi),
+        "ori": init_pose.ori.clone().premultiply(rel_pose.ori) };
+}
+
+export function absToRel(abs_pose, init_pose) {
+    return {
+        "posi": abs_pose.posi.clone().add( init_pose.posi.clone().negate()),
+        "ori": init_pose.ori.clone().invert().premultiply(abs_pose.ori)};
+}

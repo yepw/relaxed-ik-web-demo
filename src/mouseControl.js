@@ -4,7 +4,9 @@
 
 import { atan, e } from 'mathjs';
 import * as T from 'three';
-import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3, rotQuaternion, changeReferenceFrame, quaternionToAxisAngle } from './utils';
+import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3, rotQuaternion, 
+    T_ROS_to_THREE, T_THREE_to_ROS, relToAbs, absToRel,
+    changeReferenceFrame, quaternionToAxisAngle } from './utils';
 
 export class MouseControl {
     constructor(options) {
@@ -33,11 +35,6 @@ export class MouseControl {
 
         this.ee_goal_rel_ros = {"posi": new T.Vector3(),
                                 "ori": new T.Quaternion().identity()};
-        
-        // transformation from ROS' reference frame to THREE's reference frame
-        this.T_ROS_to_THREE = new T.Matrix4().makeRotationFromEuler(new T.Euler(Math.PI/2, 0., 0.));
-        // transformation from THREE' reference frame to ROS's reference frame
-        this.T_THREE_to_ROS= this.T_ROS_to_THREE.clone().invert();
 
         this.pointer_locked = false;
         this.isRotate = false;
@@ -274,8 +271,8 @@ export class MouseControl {
 
         if (!this.moveCursorNotRobot) {
             let curr_ee_abs_three =  getCurrEEpose();
-            let curr_ee_rel_three = this.absToRel(curr_ee_abs_three, this.init_ee_abs_three);
-            this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, this.T_ROS_to_THREE);
+            let curr_ee_rel_three = absToRel(curr_ee_abs_three, this.init_ee_abs_three);
+            this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, T_ROS_to_THREE);
         } 
 
         if (this.isRotate) {
@@ -301,8 +298,8 @@ export class MouseControl {
 
         if (!this.moveCursorNotRobot) {
             let curr_ee_abs_three =  getCurrEEpose();
-            let curr_ee_rel_three = this.absToRel(curr_ee_abs_three, this.init_ee_abs_three);
-            this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, this.T_ROS_to_THREE);
+            let curr_ee_rel_three = absToRel(curr_ee_abs_three, this.init_ee_abs_three);
+            this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, T_ROS_to_THREE);
         } 
         
         if (this.isRotate) {
@@ -335,7 +332,7 @@ export class MouseControl {
                             x, 
                             z]));
 
-        let r_ros = changeReferenceFrame({"posi": new T.Vector3(), "ori": r.clone()}, this.T_ROS_to_THREE).ori;
+        let r_ros = changeReferenceFrame({"posi": new T.Vector3(), "ori": r.clone()}, T_ROS_to_THREE).ori;
 
         if (this.rel_rot) {
             this.ee_goal_rel_ros.ori.premultiply(r_ros);
@@ -348,19 +345,7 @@ export class MouseControl {
 
         this.ee_goal_rel_ros.posi.add( step );
     }
-
-    relToAbs(rel_pose, init_pose) {
-        return {
-            "posi": init_pose.posi.clone().add(rel_pose.posi),
-            "ori": init_pose.ori.clone().premultiply(rel_pose.ori) };
-    }
-
-    absToRel(abs_pose, init_pose) {
-        return {
-            "posi": abs_pose.posi.clone().add( init_pose.posi.clone().negate()),
-            "ori": init_pose.ori.clone().invert().premultiply(abs_pose.ori)};
-    }
-    
+   
     step() {
         let currStepTime = performance.now();
         if (this.preStepTime !== undefined) {
@@ -375,22 +360,22 @@ export class MouseControl {
                                 "ori": this.ee_goal_rel_ros.ori.clone()};
         
         // convert ee_goal from ROS reference frame to THREE reference frame
-        let ee_goal_rel_three = changeReferenceFrame(ee_goal_rel_ros, this.T_THREE_to_ROS);
-        let ee_goal_abs_three = this.relToAbs(ee_goal_rel_three,  this.init_ee_abs_three);
+        let ee_goal_rel_three = changeReferenceFrame(ee_goal_rel_ros, T_THREE_to_ROS);
+        let ee_goal_abs_three = relToAbs(ee_goal_rel_three,  this.init_ee_abs_three);
 
         if (window.taskControl.curr_task) {
             // making sure the pen can't go through the board
             if (window.taskControl.curr_task.collision)  {
                 let tmp = window.taskControl.curr_task.collision(ee_goal_abs_three);
-                let tmp_ee_rel_three = this.absToRel(tmp,  this.init_ee_abs_three);
-                this.ee_goal_rel_ros= changeReferenceFrame(tmp_ee_rel_three, this.T_ROS_to_THREE);
+                let tmp_ee_rel_three = absToRel(tmp,  this.init_ee_abs_three);
+                this.ee_goal_rel_ros= changeReferenceFrame(tmp_ee_rel_three, T_ROS_to_THREE);
             }
 
             // snapping the tool tip in the constrained subspace
             if (this.snapping &&  window.taskControl.curr_task.snapping) 
                 window.taskControl.curr_task.snapping(ee_goal_abs_three);
-            ee_goal_rel_three = this.absToRel(ee_goal_abs_three,  this.init_ee_abs_three);
-            ee_goal_rel_ros = changeReferenceFrame(ee_goal_rel_three, this.T_ROS_to_THREE);
+            ee_goal_rel_three = absToRel(ee_goal_abs_three,  this.init_ee_abs_three);
+            ee_goal_rel_ros = changeReferenceFrame(ee_goal_rel_three, T_ROS_to_THREE);
         }
 
         this.target_cursor.position.copy( ee_goal_abs_three.posi );
@@ -413,9 +398,9 @@ export class MouseControl {
                         ee_goal_rel_ros.posi.z],
                         [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
                         [1., 0., 0., 0., 1., 0., 0., 0., 1.],
-                        [0, 0, 1],
+                        [0, 0, 0],
                         true,
-                        false);
+                        true);
             } else {
                 res = this.relaxedIK.solve ([
                     ee_goal_rel_ros.posi.x,
