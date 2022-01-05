@@ -46,7 +46,7 @@ export function relaxedikDemo() {
 
     createText("Introduction:", "inputs", "h3");
     createText("This is an online demo of Relaxed-IK.", "inputs", "p");
-    createText("The yellow sphere visualizes the position goal specified by a user. Purple objects are obstacles.", "inputs", "p");
+    createText("The yellow sphere visualizes position goals specified by a user. Purple objects are obstacles.", "inputs", "p");
 
     createBr("inputs");
     createBr("inputs");

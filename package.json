@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
+  "homepage": "http://yepw.github.io/urdf-loader-test-vr",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --devtool source-map"
+    "build": "webpack --devtool source-map",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "gh-pages": "^3.2.3",
     "webpack": "^5.57.1",
     "webpack-cli": "^4.7.2"
   },
