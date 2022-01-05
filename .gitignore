@@ -1,4 +1,6 @@
-dist/
+dist/*
 node_modules/
+.vscode/
+
 !dist/index.css
 !dist/index.html
