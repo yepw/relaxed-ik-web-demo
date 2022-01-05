@@ -19,8 +19,8 @@ export class MouseControl {
         this.target_cursor = options.target_cursor;
         
         // this.target_cursor.visible  = false;
-        let axesHelper = new T.AxesHelper(5);
-        this.target_cursor.add(axesHelper);
+        // let axesHelper = new T.AxesHelper(5);
+        // this.target_cursor.add(axesHelper);
 
         this.controlMapping = options.controlMapping;
 

@@ -49,17 +49,17 @@ export function relaxedikDemo() {
         ur5RobotFile = URL.createObjectURL(blob)
     });
 
-    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/backgrounds/kitchen%20updated/Kitchen/Kitchen_dynamic/urdf/kitchen_dynamic.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/objects/backgrounds/Kitchen_updated/Kitchen_dynamic/urdf/kitchen_dynamic.urdf", (blob) => {
         loadKitchenDynamic(URL.createObjectURL(blob))
     });
 
     // refridgerator, props (plates, microwave, bowls, etc.)
-    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/backgrounds/kitchen%20updated/Kitchen/Kitchen_standard/urdf/Kitchen_standard.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/objects/backgrounds/Kitchen_updated/Kitchen_standard/urdf/Kitchen_standard.urdf", (blob) => {
         loadKitchenStandard(URL.createObjectURL(blob))
     });
 
     // kitchen 
-    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/backgrounds/kitchen%20updated/Kitchen/Kitchen_static/urdf/Kitchen_static.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/gjnguyen18/URDF-Model-Viewer-Test-Files/main/objects/backgrounds/Kitchen_updated/Kitchen_static/urdf/Kitchen_static.urdf", (blob) => {
         loadKitchenStatic(URL.createObjectURL(blob))
     });
 
@@ -337,7 +337,7 @@ export function relaxedikDemo() {
     }
 
     window.taskControl  = new TaskControl({ scene, camera });
-    let taskSelect = createSelect("tasks", "tasks", "inputs", [
+    let taskSelect = createSelect("tasks", "Tasks", "inputs", [
         'None',
         'Pick and Place',
         'Drawing'

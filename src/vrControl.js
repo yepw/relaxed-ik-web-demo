@@ -64,10 +64,10 @@ export class VrControl {
             this.renderer.xr.defaultPosition = this.defaultPosition;
         })
 
-        let axesHelper = new T.AxesHelper(5);
-        window.robot.links.finger_tip.add(axesHelper);
-        let axesHelper2 = new T.AxesHelper(5);
-        this.controllerGrip1.add(axesHelper2);
+        // let axesHelper = new T.AxesHelper(5);
+        // window.robot.links.finger_tip.add(axesHelper);
+        // let axesHelper2 = new T.AxesHelper(5);
+        // this.controllerGrip1.add(axesHelper2);
     }
 
     squeeze() {

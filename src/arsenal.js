@@ -61,7 +61,7 @@ export class Arsenal {
         this.add( new InputTool({
             name: 'controller',
             model: controllerModel,
-            image_url: "../images/vive_controller.png",
+            image_url: "./images/vive_controller.png",
             relaxedik_config: {
                 x: true,
                 y: true,
@@ -77,7 +77,7 @@ export class Arsenal {
         this.add( new InputTool({
             name: 'pen',
             model: markerModel,
-            image_url: "../images/marker.png",
+            image_url: "./images/marker.png",
             relaxedik_config: {
                 x: true,
                 y: true,
@@ -93,7 +93,7 @@ export class Arsenal {
         this.add( new InputTool({
             name: 'tongs',
             model: tongsModel,
-            image_url: "../images/tongs.png",
+            image_url: "./images/tongs.png",
             relaxedik_config: {
                 x: true,
                 y: true,

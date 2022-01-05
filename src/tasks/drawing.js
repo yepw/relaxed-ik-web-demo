@@ -89,7 +89,7 @@ export class SVGCurve extends T.Group{
         // load a SVG resource
         loader.load(
             // resource URL
-            '../images/' + file_name,
+            './images/' + file_name,
             // called when the resource is loaded
             function (data) {
                 const paths = data.paths;
