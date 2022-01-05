@@ -4,8 +4,6 @@
 
 import * as T from 'three';
 // import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3 } from './utils';
-import { CanvasUI } from './interfaces/WebXRCanvasUI'
-import { Arsenal } from './arsenal';
 
 export class VrControl {
     constructor(options) {
@@ -15,7 +13,6 @@ export class VrControl {
         this.camera = options.camera;
         this.intervalID = undefined;
         this.mouseControl = window.mouseControl
-        this.controlMapping = options.controlMapping;
 
         this.lastSqueeze = 0;
         this.lastTouchpad = Date.now();
@@ -29,51 +26,29 @@ export class VrControl {
         // if true, send relative rotation (velocity) commend to relaxedik
         this.rel_rot = true;
 
-        this.controllerGrip1 = this.renderer.xr.getControllerGrip(0);
+        this.controllerGrip = this.renderer.xr.getControllerGrip(0);
 
         this.userGroup = new T.Group();
         this.userGroup.name = "user_group";
         this.userGroup.add(this.camera);
-        this.userGroup.add(this.controllerGrip1);
+        this.userGroup.add(this.controllerGrip);
         this.scene.add(this.userGroup);
 
         this.select = this.select.bind(this);
         this.squeeze = this.squeeze.bind(this);
 
-        this.controllerGrip1.addEventListener('select', this.select.bind(this));
-        this.controllerGrip1.addEventListener('squeeze', this.squeeze.bind(this));
+        this.controllerGrip.addEventListener('select', this.select.bind(this));
+        this.controllerGrip.addEventListener('squeeze', this.squeeze.bind(this));
         let that = this;
-        this.controllerGrip1.addEventListener('connected', (e) => {
+        this.controllerGrip.addEventListener('connected', (e) => {
             that.vive_buttons = e.data.gamepad;
         })
-
-        this.arsenal = new Arsenal( {
-            "controllerGrip": this.controllerGrip1,
-            "camera": this.camera,
-            "mouseControl": this.mouseControl
-        })
-        
-        let stereoToggle = document.querySelector('#stereo-toggle');
-        stereoToggle.addEventListener('click', (e) => {
-            this.renderer.xr.stereo = e.target.checked
-        })
-
-        let parallaxToggle = document.querySelector('#parallax-toggle');
-        parallaxToggle.addEventListener('click', (e) => {
-            this.renderer.xr.parallax = e.target.checked;
-            this.renderer.xr.defaultPosition = this.defaultPosition;
-        })
-
-        let axesHelper = new T.AxesHelper(5);
-        window.robot.links.finger_tip.add(axesHelper);
-        let axesHelper2 = new T.AxesHelper(5);
-        this.controllerGrip1.add(axesHelper2);
     }
 
     squeeze() {
         if (Math.abs(Date.now() - this.lastSqueeze) > 300) {
             console.log('Reset robot pose');
-            this.arsenal.robot_reset();
+            this.mouseControl.reset();
         } else {
             this.renderer.xr.stereo = !this.renderer.xr.stereo;
             console.log('Stereo: ' +  this.renderer.xr.stereo);
@@ -88,10 +63,10 @@ export class VrControl {
 
         } else {
             this.controlMode = true;
-            let prev = this.getPose(this.controllerGrip1)
+            let prev = this.getPose(this.controllerGrip)
 
             this.intervalID = setInterval(() => {
-                let curr = this.getPose(this.controllerGrip1)
+                let curr = this.getPose(this.controllerGrip)
 
                 let x = (curr.x - prev.x);
                 let y = (curr.y - prev.y);
@@ -114,11 +89,11 @@ export class VrControl {
     }
     
     gamepad_left() {
-        this.arsenal.prev_tool();
+        console.log("gamepad left pressed");
     }
     
     gamepad_right() {
-        this.arsenal.next_tool();
+        console.log("gamepad right pressed");
     }
 
     gamepad_backward() {
@@ -130,7 +105,7 @@ export class VrControl {
         // re-ground
         let eyePose = this.camera.matrixWorld.clone();
         let userPose = this.userGroup.matrixWorld.clone();
-        let handPose = this.controllerGrip1.matrixWorld.clone();
+        let handPose = this.controllerGrip.matrixWorld.clone();
         let relHandPose = userPose.clone().invert().multiply( handPose);
         let eePosi = new T.Vector3().setFromMatrixPosition(window.robot.links.finger_tip.matrixWorld);
 
@@ -142,7 +117,7 @@ export class VrControl {
     }
     
     gamepad_center() {
-        console.log("center button pressed");
+        console.log("gamepad center pressed");
     }
 
     getPose(controller) {

@@ -2,9 +2,8 @@
  * @author Yeping Wang 
  */
 
-import { atan, e } from 'mathjs';
 import * as T from 'three';
-import { degToRad, getCurrEEpose, mathjsMatToThreejsVector3, rotQuaternion, 
+import { degToRad, getCurrEEpose, rotQuaternion, 
     T_ROS_to_THREE, T_THREE_to_ROS, relToAbs, absToRel,
     changeReferenceFrame, quaternionToAxisAngle } from './utils';
 
@@ -18,17 +17,11 @@ export class MouseControl {
         this.robotInfo = options.robot_info;
         this.target_cursor = options.target_cursor;
         
-        // this.target_cursor.visible  = false;
-        let axesHelper = new T.AxesHelper(5);
-        this.target_cursor.add(axesHelper);
-
-        this.controlMapping = options.controlMapping;
-
-        this.moveTransScale;
-        this.moveRotScale;
-        this.wheelTransScale;
-        this.wheelRotScale;
-
+        this.moveTransScale = 1e-4;;
+        this.moveRotScale = 3e-4;
+        this.wheelTransScale = 3e-2;
+        this.wheelRotScale = 3e-2;
+       
         this.radius = 35;
 
         this.init_ee_abs_three = getCurrEEpose();
@@ -38,8 +31,6 @@ export class MouseControl {
 
         this.pointer_locked = false;
         this.isRotate = false;
-        this.moveCursorNotRobot = true;
-        this.rel_rot = true;
 
         this.canvas = document.getElementById('mouse-control-canvas');
 
@@ -57,27 +48,6 @@ export class MouseControl {
         this.canvas.onclick = function () {
             that.canvas.requestPointerLock();
         };
-
-        this.cursorOrRobot = document.getElementById('cursor-or-robot-toggle');
-        this.cursorOrRobot.onclick = function () {
-            that.moveCursorNotRobot = this.checked;
-            if (that.moveCursorNotRobot) {
-                that.moveTransScale = 1e-4;
-                that.moveRotScale = 3e-4;
-                that.wheelTransScale = 3e-2;
-                that.wheelRotScale = 3e-2;
-            } else {
-                if (that.showCursor) {
-                    that.showCursor.checked = false;
-                    that.showCursor.onclick();
-                }
-                that.moveTransScale = 1e-3;
-                that.moveRotScale = 1e-3;
-                that.wheelTransScale = 3e-1;
-                that.wheelRotScale = 3e-1;
-            }
-        };
-        this.cursorOrRobot.onclick();
 
         this.showCursor = document.getElementById('show-cursor-toggle');
         this.showCursor.onclick = function () {
@@ -100,17 +70,6 @@ export class MouseControl {
         this.updateRates = [];
         this.relaxedIKRates = [];
         this.preStepTime = undefined;
-        
-        // snapping
-        this.snapping = false;
-        const snappingToggle = document.getElementById('snapping-toggle');
-        snappingToggle.onclick = function () {
-            console.log(this.checked);
-            if (this.checked) 
-                that.snapping  = true;
-            else
-                that.snapping  = false;
-        }; 
     }
 
     resizeCanvas() {
@@ -269,12 +228,6 @@ export class MouseControl {
             wheelInput = -event.detail;
         }
 
-        if (!this.moveCursorNotRobot) {
-            let curr_ee_abs_three =  getCurrEEpose();
-            let curr_ee_rel_three = absToRel(curr_ee_abs_three, this.init_ee_abs_three);
-            this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, T_ROS_to_THREE);
-        } 
-
         if (this.isRotate) {
             this.ee_goal_rel_ros.ori.premultiply( new T.Quaternion().setFromEuler( new T.Euler(
                 0.0,
@@ -282,11 +235,10 @@ export class MouseControl {
                 Math.sign(wheelInput) * this.wheelRotScale
             )))
         } else {
-            let step = mathjsMatToThreejsVector3( 
-                this.controlMapping.transform([
+            let step = new T.Vector3( 
                     0.0,
                     0.0,
-                    Math.sign(wheelInput) * this.wheelTransScale]));
+                    Math.sign(wheelInput) * this.wheelTransScale);
             this.ee_goal_rel_ros.posi.add( step );
         }
     }
@@ -295,12 +247,6 @@ export class MouseControl {
         if (!this.pointer_locked) return;
         let x = e.movementX;
         let y = e.movementY;
-
-        if (!this.moveCursorNotRobot) {
-            let curr_ee_abs_three =  getCurrEEpose();
-            let curr_ee_rel_three = absToRel(curr_ee_abs_three, this.init_ee_abs_three);
-            this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, T_ROS_to_THREE);
-        } 
         
         if (this.isRotate) {
             this.ee_goal_rel_ros.ori.premultiply( new T.Quaternion().setFromEuler( new T.Euler(
@@ -310,39 +256,24 @@ export class MouseControl {
             )))
         } else {
             // moving the robot
-            let step = mathjsMatToThreejsVector3( 
-                            this.controlMapping.transform([
-                                x * this.moveTransScale,
-                                -y * this.moveTransScale, 
-                                0]));
-
+            let step = new T.Vector3( 
+                            -y * this.moveTransScale,
+                            -x * this.moveTransScale, 
+                            0 );
             this.ee_goal_rel_ros.posi.add( step );
         }
     }
 
     onControllerMove(x, y, z, r) {
-        // if (!this.moveCursorNotRobot) {
-        //     let curr_ee_abs_three =  getCurrEEpose();
-        //     let curr_ee_rel_three = this.absToRel(curr_ee_abs_three, this.init_ee_abs_three);
-        //     this.ee_goal_rel_ros = changeReferenceFrame(curr_ee_rel_three, this.T_ROS_to_THREE);
-        // } 
-        let step = mathjsMatToThreejsVector3( 
-                        this.controlMapping.transform([
+        let step = new T.Vector3( 
                             y,
                             x, 
-                            z]));
+                            z );
 
         let r_ros = changeReferenceFrame({"posi": new T.Vector3(), "ori": r.clone()}, T_ROS_to_THREE).ori;
 
-        if (this.rel_rot) {
-            this.ee_goal_rel_ros.ori.premultiply(r_ros);
-        } else { 
-            
-            // for contoller, z is pointing back; for end-effector, z is pointing forward
-            let r_updated = r_ros.clone().multiply( new T.Quaternion().setFromEuler(new T.Euler(-Math.PI/2, 0., -Math.PI/2)));
-            this.ee_goal_rel_ros.ori = r_updated;
-        }
-
+        this.ee_goal_rel_ros.ori.premultiply(r_ros);
+      
         this.ee_goal_rel_ros.posi.add( step );
     }
    
@@ -363,21 +294,6 @@ export class MouseControl {
         let ee_goal_rel_three = changeReferenceFrame(ee_goal_rel_ros, T_THREE_to_ROS);
         let ee_goal_abs_three = relToAbs(ee_goal_rel_three,  this.init_ee_abs_three);
 
-        if (window.taskControl.curr_task) {
-            // making sure the pen can't go through the board
-            if (window.taskControl.curr_task.collision)  {
-                let tmp = window.taskControl.curr_task.collision(ee_goal_abs_three);
-                let tmp_ee_rel_three = absToRel(tmp,  this.init_ee_abs_three);
-                this.ee_goal_rel_ros= changeReferenceFrame(tmp_ee_rel_three, T_ROS_to_THREE);
-            }
-
-            // snapping the tool tip in the constrained subspace
-            if (this.snapping &&  window.taskControl.curr_task.snapping) 
-                window.taskControl.curr_task.snapping(ee_goal_abs_three);
-            ee_goal_rel_three = absToRel(ee_goal_abs_three,  this.init_ee_abs_three);
-            ee_goal_rel_ros = changeReferenceFrame(ee_goal_rel_three, T_ROS_to_THREE);
-        }
-
         this.target_cursor.position.copy( ee_goal_abs_three.posi );
         this.target_cursor.quaternion.copy( ee_goal_abs_three.ori );
         this.target_cursor.matrixWorldNeedsUpdate = true;
@@ -391,28 +307,11 @@ export class MouseControl {
         if ( d > 1e-3 || a > 1e-3 ) {
             let before = performance.now();
             let res;
-            if (this.rel_rot) {
-                res = this.relaxedIK.solve ([
-                        ee_goal_rel_ros.posi.x,
-                        ee_goal_rel_ros.posi.y,
-                        ee_goal_rel_ros.posi.z],
-                        [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
-                        [1., 0., 0., 0., 1., 0., 0., 0., 1.],
-                        [0, 0, 0],
-                        true,
-                        true);
-            } else {
-                res = this.relaxedIK.solve ([
+            res = this.relaxedIK.solve ([
                     ee_goal_rel_ros.posi.x,
                     ee_goal_rel_ros.posi.y,
                     ee_goal_rel_ros.posi.z],
-                    [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z],
-                    [0., 0., 1.],
-                    2,
-                    true,
-                    false);
-            }
-            
+                    [ee_goal_rel_ros.ori.w, ee_goal_rel_ros.ori.x, ee_goal_rel_ros.ori.y, ee_goal_rel_ros.ori.z] );
             let after = performance.now();
             this.relaxedIKRates.push( 1000.0 / (after - before))
             if (this.relaxedIKRates.length === 200) {
@@ -457,14 +356,4 @@ export class MouseControl {
         }
         return false;
     };
-
-    updateFingerTip(x, y, z) {
-        window.robot.links.finger_tip.parent.position.x += x;
-        window.robot.links.finger_tip.parent.position.y += y;
-        window.robot.links.finger_tip.parent.position.z += z;
-        this.relaxedIK.update_finger_tip(x, y, z);
-        this.reset();
-        this.init_ee_abs_three = getCurrEEpose();
-    }
-
 };
