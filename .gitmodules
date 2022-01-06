@@ -1,3 +1,6 @@
 [submodule "relaxed_ik_web"]
 	path = relaxed_ik_web
 	url = git@github.com:yepw/relaxed_ik_web.git
+[submodule "urdf-loaders"]
+	path = urdf-loaders
+	url = https://github.com/yepw/urdf-loaders

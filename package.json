@@ -22,7 +22,7 @@
     "js-yaml": "^4.1.0",
     "mathjs": "^9.5.0",
     "three": "^0.129.0",
-    "urdf-loader": "^0.10.2",
+    "urdf-loader": "file:urdf-loaders/javascript",
     "xmlhttprequest": "^1.8.0"
   }
 }
