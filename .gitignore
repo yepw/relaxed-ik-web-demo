@@ -1,6 +1,5 @@
-dist/*
+dist
 node_modules/
 .vscode/
+package-lock.json
 
-!dist/index.css
-!dist/index.html
