@@ -23,6 +23,7 @@
     "mathjs": "^9.5.0",
     "three": "^0.129.0",
     "urdf-loader": "file:urdf-loaders/javascript",
-    "xmlhttprequest": "^1.8.0"
+    "xmlhttprequest": "^1.8.0",
+    "@dimforge/rapier3d": "^0.7.6"
   }
 }
