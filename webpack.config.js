@@ -1,6 +1,12 @@
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+ 
 module.exports = {
-    //...
+    plugins: [
+        new CopyWebpackPlugin([
+            { from: 'static' }
+        ])
+    ],
     experiments: {
-      asyncWebAssembly: true
+        asyncWebAssembly: true
     },
 };

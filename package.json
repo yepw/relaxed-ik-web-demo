@@ -6,7 +6,7 @@
   "homepage": "http://yepw.github.io/urdf-loader-test-vr",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --devtool source-map",
+    "build": "rimraf dist pkg && webpack --devtool source-map",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
@@ -14,9 +14,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "copy-webpack-plugin": "^5.1.2",
     "gh-pages": "^3.2.3",
     "webpack": "^5.57.1",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.7.2",
+    "rimraf": "^3.0.0"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
