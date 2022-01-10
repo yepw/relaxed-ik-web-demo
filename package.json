@@ -7,6 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf dist pkg && webpack --devtool source-map",
+    "start": "rimraf dist pkg && webpack-dev-server --open -d --host 0.0.0.0",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
@@ -16,16 +17,17 @@
   "devDependencies": {
     "copy-webpack-plugin": "^5.1.2",
     "gh-pages": "^3.2.3",
+    "rimraf": "^3.0.0",
     "webpack": "^5.57.1",
     "webpack-cli": "^4.7.2",
-    "rimraf": "^3.0.0"
+    "webpack-dev-server": "^4.7.2"
   },
   "dependencies": {
+    "@dimforge/rapier3d": "^0.7.6",
     "js-yaml": "^4.1.0",
     "mathjs": "^9.5.0",
-    "three": "^0.129.0",
+    "three": "^0.136.0",
     "urdf-loader": "file:urdf-loaders/javascript",
-    "xmlhttprequest": "^1.8.0",
-    "@dimforge/rapier3d": "^0.7.6"
+    "xmlhttprequest": "^1.8.0"
   }
 }

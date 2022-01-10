@@ -46,13 +46,13 @@ export function relaxedikDemo() {
         let sawyerRobotFile; 
         getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
             sawyerRobotFile = URL.createObjectURL(blob);
-            robotSwitch.value = "UR5";
-            robotSwitch.onchange();
         });
     
         let ur5RobotFile;
-        getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/ur5_description/urdf/ur5_gripper.urdf", (blob) => {
-            ur5RobotFile = URL.createObjectURL(blob)
+        getURDFFromURL("ur5_description/urdf/ur5_gripper.urdf", (blob) => {
+            ur5RobotFile = URL.createObjectURL(blob);
+            robotSwitch.value = "UR5";
+            robotSwitch.onchange();
         });
     
         createText("Introduction:", "inputs", "h3");
@@ -110,8 +110,10 @@ export function relaxedikDemo() {
                 scene.remove(window.robot);
             const manager = new T.LoadingManager();
             const loader = new URDFLoader(manager);
+            loader.parseCollision = true;
             loader.load(robotFile, result => {
                 window.robot = result;
+                console.log(window.robot);
             });
             manager.onLoad = () => {
                 scene.add(window.robot);
@@ -144,9 +146,23 @@ export function relaxedikDemo() {
                     jointSliders.push(slider);
                 })
 
+                // relaxed-ik
                 init().then( () => {
                     load_config(robot_info_link, robot_nn_config_link, env_settings_link);
                 });
+
+                let createRobotCollider = (currJoint, parentLink) => {
+                    currJoint.forEach( (joint) => {
+                        parent
+                    })
+                    // let bodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(x, y, z);
+                    // let body = world.createRigidBody(bodyDesc);
+                    // let vertices = parent
+                    // colliderDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
+                    // .setCollisionGroups(group);
+                }
+
+                createRobotCollider(window.robot);
             }
         }
 
