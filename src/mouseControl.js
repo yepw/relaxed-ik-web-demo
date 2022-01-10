@@ -107,14 +107,13 @@ export class MouseControl {
     canvasDraw() {
         let context = this.canvas.getContext('2d');
         context.save();
-        context.fillStyle = "white";
-        context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         context.beginPath();
         context.arc(this.canvas.width / 2, this.canvas.height / 2, 
                         this.radius * 5 * this.viewScale, 0, degToRad(360), true);
-        context.strokeStyle = "#272727";
-        context.lineWidth = Math.floor(3 * this.viewScale);
+        context.strokeStyle = "#ffffff";
+        context.lineWidth = Math.floor(4 * this.viewScale);
         context.stroke();
 
         if (this.pointer_locked) {
@@ -141,7 +140,7 @@ export class MouseControl {
 
             // write unlock instructor
             context.save();
-            context.fillStyle = "#000000";
+            context.fillStyle = "#ffffff";
             context.font = "20px ";
             context.textAlign = "center";
             context.fillText("Press ESC to", this.canvas.width/2, 7 * this.canvas.height/10);
@@ -151,14 +150,14 @@ export class MouseControl {
             // write translate or rotate
             if (this.isRotate) {
                 context.save();
-                context.fillStyle = "#000000";
+                context.fillStyle = "#ffffff";
                 context.font = "30px ";
                 context.textAlign = "center";
                 context.fillText("Rotate", this.canvas.width/2, 2 * this.canvas.height/10);
                 context.restore();
             } else {
                 context.save();
-                context.fillStyle = "#000000";
+                context.fillStyle = "#ffffff";
                 context.font = "30px ";
                 context.textAlign = "center";
                 context.fillText("Move", this.canvas.width/2, 2 * this.canvas.height/10);

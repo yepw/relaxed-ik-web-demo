@@ -49,17 +49,24 @@ export function relaxedikDemo() {
     createText("The yellow sphere visualizes position goals specified by a user. Purple objects are obstacles.", "inputs", "p");
 
     createBr("inputs");
-    createBr("inputs");
 
-    createText("How to control:", "inputs", "h3");
+    createText("Control with a Mouse:", "inputs", "h3");
 
     createText("1. Click the red dot below.", "inputs", "p");
     createText("2. Move the mouse to control the robot.", "inputs", "p");
-    createText("3. Scroll mouse wheel to move the robot up and down.", "inputs", "p");
-    createText("4. Right-click to switch to rotation mode.", "inputs", "p");
+    createText("3. Scroll the mouse wheel to move up and down.", "inputs", "p");
+    createText("4. Right-click to switch to the rotation mode.", "inputs", "p");
     createText("5. Press the ESC button on your keyboard to unlock the cursor.", "inputs", "p");
 
     createBr("inputs");
+
+    createText("Try the Demo in VR:", "inputs", "h3");
+
+    createText("If you are using HTC Vive", "inputs", "p");
+    createText("1. Launch SteamVR", "inputs", "p");
+    createText("2. Click the Enter VR button on this page", "inputs", "p");
+    createText("3. Press the trigger on the VR controller to start", "inputs", "p");
+    
     createBr("inputs");
 
     createToggleSwitch ("show-cursor", "inputs", "Hide", "Show Robot Goal", true);

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
-  "homepage": "http://yepw.github.io/urdf-loader-test-vr",
+  "homepage": "http://yepw.github.io/relaxed-ik-web-demo",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf dist pkg && webpack --devtool source-map",

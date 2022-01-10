@@ -1,4 +1,5 @@
 ## A Web Demo of Relaxed-IK
+[Online Demo](https://yepw.github.io/relaxed-ik-web-demo/)
 ### Usage
 ```
 git submodule init
