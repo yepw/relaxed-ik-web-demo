@@ -11,9 +11,11 @@ function createBlob(text) {
 export function getURDFFromLocal(files, func) {
     let fileArray = Array.from(files);
     let urdfFile = fileArray.find(file => file.webkitRelativePath.includes("/urdf/"));
-    let daeFiles = fileArray.filter(file => file.webkitRelativePath.includes(".dae"))
+    let daeFiles = fileArray.filter(file => file.webkitRelativePath.includes(".dae"));
+    let stlFiles = fileArray.filter(file => file.webkitRelativePath.includes(".stl"));
+    let dataFiles = daeFiles.concat(stlFiles)
 
-    getDAEFiles(daeFiles, fileArray, (map) => {
+    getMeshFiles(dataFiles, fileArray, (map) => {
         let urdfStr;
         let modifiedBlob;
         let fr = new FileReader();
@@ -63,11 +65,7 @@ export function getURDFFromURL(link, func) {
                         let tag = "";
                         if (/\.stl$/i.test(filePath)) {
                             tag = ".stlX"
-                        } else if (/\.dae$/i.test(filePath)) {
-                            tag = ".daeX"
-                        }
-                        getDAESFromURL(blob, imageMap, meshURL, (newMeshBlob) => {
-                            let blobURL = URL.createObjectURL(newMeshBlob);
+                            let blobURL = URL.createObjectURL(blob);
                             let newLink = blobURL.substring(blobURL.lastIndexOf("/") + 1).trim() + tag;
                             let replaceLink = filePath;
                             urdfStr = urdfStr.replace(replaceLink, newLink);
@@ -76,7 +74,20 @@ export function getURDFFromURL(link, func) {
                                 let modifiedBlob = createBlob(urdfStr);
                                 func(modifiedBlob);
                             }
-                        })
+                        } else if (/\.dae$/i.test(filePath)) {
+                            tag = ".daeX"
+                            getDAESFromURL(blob, imageMap, meshURL, (newMeshBlob) => {
+                                let blobURL = URL.createObjectURL(newMeshBlob);
+                                let newLink = blobURL.substring(blobURL.lastIndexOf("/") + 1).trim() + tag;
+                                let replaceLink = filePath;
+                                urdfStr = urdfStr.replace(replaceLink, newLink);
+                                fetchCount++;
+                                if (fetchCount == meshes.length) {
+                                    let modifiedBlob = createBlob(urdfStr);
+                                    func(modifiedBlob);
+                                }
+                            })
+                        }
                     });
                 })
             }
@@ -155,10 +166,11 @@ export function loadJsonFile(file, func) {
     fr.readAsText(file);
 }
 
-function getDAEFiles(daeFiles, fileArray, func) {
-    let daeMap = new Map();
-    let recursiveDAEModify = (daeFiles, fileArray, index) => {
-        let daeFile = daeFiles[index]
+function getMeshFiles(meshFiles, fileArray, func) {
+    let meshMap = new Map();
+    let recursiveDAEModify = (meshFiles, fileArray, index) => {
+        let meshFile = meshFiles[index]
+        console.log(meshFile)
         let fr = new FileReader();
         fr.onload = function () {
             let daeStr = fr.result;
@@ -170,19 +182,30 @@ function getDAEFiles(daeFiles, fileArray, func) {
                 daeStr = daeStr.replaceAll(replaceLink, newLink);
             })
             let blob = createBlob(daeStr);
-            let daeURL = URL.createObjectURL(blob)
-            let oldLink = "package://" + daeFile.webkitRelativePath;
-            let newLink = daeURL.substring(daeURL.lastIndexOf("/") + 1).trim() + ".daeX";
-            daeMap.set(oldLink, newLink)
-            recursiveDAEModify(daeFiles, fileArray, index, func)
+            let meshURL = URL.createObjectURL(blob)
+            let oldLink = "package://" + meshFile.webkitRelativePath;
+            let newLink = meshURL.substring(meshURL.lastIndexOf("/") + 1).trim() + ".daeX";
+            meshMap.set(oldLink, newLink)
+            recursiveDAEModify(meshFiles, fileArray, index, func)
         }
-        if(daeFile) {
+        if(meshFile) {
             index++;
-            fr.readAsText(daeFile);
+            if(meshFile.name.includes(".dae")) {
+                fr.readAsText(meshFile);
+            }
+            else if(meshFile.name.includes(".stl")) {
+                let meshURL = URL.createObjectURL(meshFile)
+                let oldLink = "package://" + meshFile.webkitRelativePath;
+                let newLink = meshURL.substring(meshURL.lastIndexOf("/") + 1).trim() + ".stlX";
+                meshMap.set(oldLink, newLink)
+                recursiveDAEModify(meshFiles, fileArray, index, func)
+            } else {
+                console.log("unknown file type: ", meshFile.name)
+            }
         } else {
-            func(daeMap);
+            func(meshMap);
         }
     }
 
-    recursiveDAEModify(daeFiles, fileArray, 0)
+    recursiveDAEModify(meshFiles, fileArray, 0)
 }

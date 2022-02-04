@@ -19,13 +19,21 @@ export function relaxedikDemo() {
 
     
     import('@dimforge/rapier3d').then(RAPIER => { // Use the RAPIER module here.
-        let gravity = { x: 0.0, y: -9.81, z: 0.0 };
-        let world = new RAPIER.World(gravity);
+        let gravity = { x: 0.0, y: 0.0, z: -9.81 };
+        let rapierWorld = new RAPIER.World(gravity);
 
         // Create the ground
-        let groundColliderDesc = RAPIER.ColliderDesc.cuboid(10.0, 0.1, 10.0);
-        world.createCollider(groundColliderDesc);
-
+        
+        let groundDesc = RAPIER.RigidBodyDesc.newStatic()
+                    .setTranslation(0., 0., 0.);
+        let groundRigidBody = rapierWorld.createRigidBody(groundDesc);
+        
+        let currCollisionGroup_membership = 0x0001;
+        let groundColliderDesc = RAPIER.ColliderDesc.cuboid(10.0, 10.0, 0.1)
+                                .setDensity(2.0);
+        let groundCollider = rapierWorld.createCollider(groundColliderDesc, groundRigidBody.handle);
+        groundCollider.setCollisionGroups( currCollisionGroup_membership << 16 | (0xffff & (0xffff ^ currCollisionGroup_membership)));
+        // groundCollider.setCollisionGroups( 0x0001fffe);
         let coll2mesh = new Map();
 
         let scene, camera, renderer, camControls, target_cursor;
@@ -39,6 +47,10 @@ export function relaxedikDemo() {
         camera.position.set(2, 2, 2);
         camera.lookAt(0, 1, 0);
     
+        let three_to_ros = new T.Group();
+        three_to_ros.rotation.set(-Math.PI/2, 0., 0.);
+        scene.add(three_to_ros);
+
         window.robot = {};
         window.vrControl = undefined;
         let jointSliders = [];
@@ -49,7 +61,7 @@ export function relaxedikDemo() {
         });
     
         let ur5RobotFile;
-        getURDFFromURL("ur5_description/urdf/ur5_gripper.urdf", (blob) => {
+        getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/physics/ur5_description/urdf/ur5_gripper.urdf", (blob) => {
             ur5RobotFile = URL.createObjectURL(blob);
             robotSwitch.value = "UR5";
             robotSwitch.onchange();
@@ -105,12 +117,33 @@ export function relaxedikDemo() {
         target_cursor = new T.Mesh( geometry, material );
         scene.add( target_cursor );
 
+        function changeRobotVisibility(parent, hideURDFVisual, hideURDFCollider) {
+            parent.children.forEach( (child) => {
+                if (child.type === 'URDFCollider') {
+                    if (hideURDFCollider === true) {
+                        child.visible = false; 
+                    } else {
+                        child.visible = true; 
+                    }
+                } else  if (child.type === 'URDFVisual') {
+                    if (hideURDFVisual === true) {
+                        child.visible = false; 
+                    } else {
+                        child.visible = true; 
+                    }
+                } else {
+                    changeRobotVisibility(child, hideURDFVisual, hideURDFCollider);
+                }
+            })
+        }
+
         let loadRobot = (robotFile, robot_info_link, robot_nn_config_link, env_settings_link) => {
             if (window.robot)
                 scene.remove(window.robot);
             const manager = new T.LoadingManager();
             const loader = new URDFLoader(manager);
             loader.parseCollision = true;
+            loader.parseVisual = true;
             loader.load(robotFile, result => {
                 window.robot = result;
                 console.log(window.robot);
@@ -151,18 +184,134 @@ export function relaxedikDemo() {
                     load_config(robot_info_link, robot_nn_config_link, env_settings_link);
                 });
 
-                let createRobotCollider = (currJoint, parentLink) => {
-                    currJoint.forEach( (joint) => {
-                        parent
-                    })
-                    // let bodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(x, y, z);
-                    // let body = world.createRigidBody(bodyDesc);
-                    // let vertices = parent
-                    // colliderDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
-                    // .setCollisionGroups(group);
-                }
 
-                createRobotCollider(window.robot);
+                let createRobotCollider = (currJoint, parentRigidBody, parentCollider) => {
+                    if (currJoint.type == 'URDFJoint' || currJoint.type == 'URDFMimicJoint') {
+                        currJoint.children.forEach( (childLink) => {
+                            if (childLink.type == 'URDFLink') {
+                                let urdfCollider = undefined; 
+                                let urdfVisual = undefined; 
+                                childLink.children.forEach( (gradChild)=> {
+                                    if (gradChild.type == 'URDFCollider') {
+                                        if (urdfCollider === undefined) {
+                                            urdfCollider = gradChild;
+                                        } else {
+                                            console.warn("Multiple URDF Collider found!");
+                                        }
+                                    } else if (gradChild.type == 'URDFVisual') {
+                                        if (urdfVisual === undefined) {
+                                            urdfVisual = gradChild;
+                                        } else {
+                                            console.warn("Multiple URDF Visual found!");
+                                        }
+                                    }
+                                });
+                               
+                                let rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setAdditionalMass(0.01);
+                                let rigidBody = rapierWorld.createRigidBody(rigidBodyDesc);
+
+                                let collider = undefined;
+                                if (urdfCollider !== undefined ) {
+                                    let mass = urdfCollider.mass;
+                                    if (!mass) {
+                                        console.warn("Undefined mass!");
+                                        mass = 1.0;
+                                    }
+                                    // rigidBodyDesc.setAdditionalMass(mass);
+                                    // TODO: set mass
+
+                                    let recursivelyFindMesh = function(node) {
+                                        if (node.type === 'Mesh') {
+                                            return [node];
+                                        }
+                                        let meshes = []
+                                        node.children.forEach( (child) => {
+                                            meshes = meshes.concat( recursivelyFindMesh(child));
+                                        });
+                                        return meshes;
+                                    }
+                                   
+                                    let colliderMeshes = recursivelyFindMesh(urdfCollider);
+
+                                    if (colliderMeshes.length != 1) {
+                                        console.warn("No collider mesh or multiple collider meshes were found under: ");
+                                        console.log(urdfCollider);
+                                        return;
+                                    } 
+
+                                    let colliderMesh = colliderMeshes[0];
+                                    let vertices = colliderMesh.geometry.getAttribute('position');
+                                    let indices = colliderMesh.geometry.index;
+                                    if (indices == null) {
+                                        // unindexed bufferedgeometry
+                                        indices = [...Array(vertices.count).keys()]
+                                    }
+                                    let colliderDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
+                                    collider = rapierWorld.createCollider(colliderDesc, rigidBody.handle);
+                                   
+                                    if (urdfVisual !== undefined) {
+                                        let mesh = urdfVisual.clone();
+                                        three_to_ros.add(mesh);
+                                        coll2mesh.set(collider, mesh);
+                                    }
+                                }
+
+                                console.log(currJoint);
+                                if ( currJoint._jointType === "fixed") {
+                                    console.log("fixed");
+                                    if (collider) {
+                                        let parentGroups_membership  =  parentCollider.collisionGroups() >> 16;
+                                        collider.setCollisionGroups( (parentGroups_membership << 16) | ( 0xffff & (0xffff ^ parentGroups_membership)));
+                                    }
+
+                                    const position = currJoint.origPosition;
+                                    const quaternion = currJoint.origQuaternion;
+                                    // TODO: take care of orientation in URDF
+                                    const anchor1 = new RAPIER.Vector3( position.x, position.y, position.z);
+                                    const frame1 = new RAPIER.Quaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+
+                                    let params = RAPIER.JointData.fixed(anchor1, frame1, 
+                                                    new RAPIER.Vector3( 0.0, 0.0, 0.0), new RAPIER.Quaternion(0.0, 0.0, 0.0, 1.0));
+                                    
+                                    rapierWorld.createImpulseJoint(params, parentRigidBody, rigidBody);
+                                    childLink.children.forEach( (joint) => {
+                                        createRobotCollider(joint, rigidBody, parentCollider);
+                                    });
+
+                                } else if (currJoint._jointType === "revolute") {
+                                    console.log("revolute");
+                                    if (collider) {
+                                        currCollisionGroup_membership *= 2;
+                                        let parentGroups_membership  =  parentCollider.collisionGroups() >> 16;
+                                        let parentGroups_filter   =  parentCollider.collisionGroups() & 0xffff;
+                                        collider.setCollisionGroups( (currCollisionGroup_membership << 16) | ( 0xffff & (0xffff ^ (parentGroups_membership | currCollisionGroup_membership))));
+                                        parentCollider.setCollisionGroups( (parentGroups_membership << 16) | (parentGroups_filter & ( parentGroups_filter ^ currCollisionGroup_membership)));
+                                    }
+
+                                    const position = currJoint.origPosition;
+                                    const quaternion = currJoint.origQuaternion;
+                                    // TODO: take care of orientation in URDF
+                                    const anchor1 = new RAPIER.Vector3( position.x, position.y, position.z);
+                                    const axis = new RAPIER.Vector3( currJoint.axis.x, currJoint.axis.y, currJoint.axis.z);
+
+                                    let params = RAPIER.JointData.revolute(anchor1, new RAPIER.Vector3( 0.0, 0.0, 0.0), axis);
+                                    let joint = rapierWorld.createImpulseJoint(params, parentRigidBody, rigidBody);
+
+                                    childLink.children.forEach( (joint) => {
+                                        createRobotCollider(joint, rigidBody, collider);
+                                    });
+                                } else {
+                                    console.log(currJoint._jointType);
+                                }
+                            }
+                        })
+                    } 
+                }
+                // changeRobotVisibility(window.robot, true, true);
+                window.robot.visible = false;
+                window.robot.children.forEach( (joint) => {
+                    createRobotCollider(joint, groundRigidBody, groundCollider);
+                });
             }
         }
 
@@ -171,7 +320,7 @@ export function relaxedikDemo() {
             let robot_nn_config = yaml.load(await fetch(robot_nn_config_link).then(response => response.text()));
             let env_settings = yaml.load(await fetch(env_settings_link).then(response => response.text()));
 
-            vis_env_collision(env_settings);
+            // vis_env_collision(env_settings);
 
             // move robot to init config
             let jointArr = Object.entries(window.robot.joints).filter(joint => joint[1]._jointType != "fixed" && joint[1].type != "URDFMimicJoint");
@@ -226,9 +375,9 @@ export function relaxedikDemo() {
 
                     // for physics engine
                     let bodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(pose_three.posi.x, pose_three.posi.y, pose_three.posi.z);
-                    let body = world.createRigidBody(bodyDesc);
+                    let body = rapierWorld.createRigidBody(bodyDesc);
                     let colliderDesc = RAPIER.ColliderDesc.ball(sphere.scale);
-                    let collider = world.createCollider(colliderDesc, body.handle);
+                    let collider = rapierWorld.createCollider(colliderDesc, body.handle);
 
                     coll2mesh.set(collider, mesh)
                 })
@@ -248,7 +397,7 @@ export function relaxedikDemo() {
 
                     // for physics engine
                     let colliderDesc = RAPIER.ColliderDesc.cuboid(cuboid.scale[0], cuboid.scale[2], cuboid.scale[1]).setTranslation(pose_three.posi.x, pose_three.posi.y, pose_three.posi.z);
-                    let collider = world.createCollider(colliderDesc);
+                    let collider = rapierWorld.createCollider(colliderDesc);
 
                     coll2mesh.set(collider, mesh)
                 })
@@ -266,7 +415,7 @@ export function relaxedikDemo() {
         // Game loop. Replace by your own game loop system.
         let gameLoop = () => {
             // Ste the simulation forward.  
-            world.step();
+            rapierWorld.step();
             coll2mesh.forEach((mesh, collider) => {
                 let position = collider.translation();
                 mesh.position.set(position.x, position.y, position.z);
