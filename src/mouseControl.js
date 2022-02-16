@@ -341,6 +341,13 @@ export class MouseControl {
                 let i = this.robotInfo.joint_ordering.indexOf(joint[0]);
                 if (i != -1) {
                     window.robot.setJointValue(joint[0],  res[i]);
+                    // if (i==1) {
+                    //     let rapierJoint = window.robot.name2joint.get(joint[0]);
+                    //     console.log(joint[0], rapierJoint)
+                    //     RAPIER.UnitImpulseJoint(rapierJoint).configureMotorPosition(res[i], 0.5, 0.5);
+                    // }
+                    const rapier_joint  = window.robot.name2joint.get(joint[0]);
+                    rapier_joint.configureMotorPosition(res[i], 0.5, 0);
                 }
             })   
             jointArr.forEach( joint => {

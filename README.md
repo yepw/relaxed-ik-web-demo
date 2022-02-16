@@ -14,3 +14,8 @@ Update `homepage` tag in `package.json`
 ```
 npm run deploy
 ```
+
+### Rapier 
+
+VSCode's live server doesn't work proporly. 
+If you want to test locally, you would need to use npm http-server

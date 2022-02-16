@@ -207,19 +207,17 @@ export function relaxedikDemo() {
                                     }
                                 });
                                
-                                let rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setAdditionalMass(0.01);
+                                let mass = childLink.mass;
+                                if (!mass) {
+                                    console.warn("Undefined mass!");
+                                    mass = 1.0;
+                                }
+
+                                let rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setAdditionalMass(mass);
                                 let rigidBody = rapierWorld.createRigidBody(rigidBodyDesc);
 
                                 let collider = undefined;
                                 if (urdfCollider !== undefined ) {
-                                    let mass = urdfCollider.mass;
-                                    if (!mass) {
-                                        console.warn("Undefined mass!");
-                                        mass = 1.0;
-                                    }
-                                    // rigidBodyDesc.setAdditionalMass(mass);
-                                    // TODO: set mass
-
                                     let recursivelyFindMesh = function(node) {
                                         if (node.type === 'Mesh') {
                                             return [node];
@@ -294,8 +292,19 @@ export function relaxedikDemo() {
                                     const anchor1 = new RAPIER.Vector3( position.x, position.y, position.z);
                                     const axis = new RAPIER.Vector3( currJoint.axis.x, currJoint.axis.y, currJoint.axis.z);
 
-                                    let params = RAPIER.JointData.revolute(anchor1, new RAPIER.Vector3( 0.0, 0.0, 0.0), axis);
-                                    let joint = rapierWorld.createImpulseJoint(params, parentRigidBody, rigidBody);
+                                    const params = RAPIER.JointData.revolute(anchor1, new RAPIER.Vector3( 0.0, 0.0, 0.0), axis);
+                                    const rapier_joint = rapierWorld.createImpulseJoint(params, parentRigidBody, rigidBody);
+                                    window.robot.name2joint.set(currJoint.name, rapier_joint);
+                                    // joint.configureMotorPosition(1.0, 0.5, 0.5);
+                                    // rapier_joint.configureMotorVelocity(1.0, 0.5);
+                                    console.log(rapier_joint)
+                                    console.log(rapier_joint.rawSet.jointConfigureMotorVelocity())
+                                    console.log(rapier_joint.rawAxis())
+                                    // console.log(Object.getPrototypeOf(rapier_joint))
+                                    // console.log(Object.getPrototypeOf(Object.getPrototypeOf(rapier_joint)))
+                                    // console.log(Object.getPrototypeOf(Object.getPrototypeOf(rapier_joint)).configureMotorVelocity())
+
+                                    rapier_joint.rawSet.jointConfigureMotorVelocity(rapier_joint.handle, rapier_joint.rawAxis(), 1.0, 0.5)
 
                                     childLink.children.forEach( (joint) => {
                                         createRobotCollider(joint, rigidBody, collider);
@@ -309,6 +318,7 @@ export function relaxedikDemo() {
                 }
                 // changeRobotVisibility(window.robot, true, true);
                 window.robot.visible = false;
+                window.robot.name2joint = new Map();
                 window.robot.children.forEach( (joint) => {
                     createRobotCollider(joint, groundRigidBody, groundCollider);
                 });
@@ -332,6 +342,7 @@ export function relaxedikDemo() {
                     slider[0].value = joint[1].jointValue[0];
                     slider[1].innerHTML = joint[0] + ": " + String(slider[0].value);
                     slider[0].oninput();
+                    
                 }
             })    
 

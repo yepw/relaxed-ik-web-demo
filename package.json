@@ -23,7 +23,7 @@
     "webpack-dev-server": "^4.7.2"
   },
   "dependencies": {
-    "@dimforge/rapier3d": "^0.7.6",
+    "@dimforge/rapier3d": "^0.8.0-alpha.1",
     "js-yaml": "^4.1.0",
     "mathjs": "^9.5.0",
     "three": "^0.136.0",
