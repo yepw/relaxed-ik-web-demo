@@ -43,6 +43,9 @@ export function degToRad(degrees) {
 
 export function getCurrEEpose() {
     let ee_posi = new T.Vector3();
+    if (window.robot.links.finger_tip == undefined) {
+        console.log("robot.links.finger_tip is undefined!");
+    }
     window.robot.links.finger_tip.getWorldPosition(ee_posi);
     let ee_ori = new T.Quaternion();
     window.robot.links.finger_tip.getWorldQuaternion(ee_ori);

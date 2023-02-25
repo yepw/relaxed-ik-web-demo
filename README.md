@@ -2,8 +2,10 @@
 [Online Demo](https://yepw.github.io/relaxed-ik-web-demo/)
 ### Usage
 ```
-git submodule init
-git submodule update
+git submodule init --recursive
+git submodule update --recursive
+cd relaxed_ik_web 
+wasm-pack build --target web
 npm install
 npm run build
 ```

@@ -8,7 +8,7 @@ import { createSlider, createCanvas, createText, createToggleSwitch, createBr, c
 import { MouseControl } from './mouseControl.js';
 import { VrControl } from './vrControl.js'
 
-import init, {RelaxedIK} from "../relaxed_ik_web/pkg/relaxed_ik_web.js";
+import init, {RelaxedIK} from "../relaxed_ik_core/pkg/relaxed_ik_core.js";
 import * as yaml from 'js-yaml';
 import { getCurrEEpose, changeReferenceFrame,
         T_ROS_to_THREE, T_THREE_to_ROS, } from './utils';
@@ -29,19 +29,25 @@ export function relaxedikDemo() {
     camera.lookAt(0, 1, 0);
 
     window.robot = {};
+    window.obstacles = [];
     window.vrControl = undefined;
     let jointSliders = [];
 
     let sawyerRobotFile; 
-    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/sawyer_description/urdf/sawyer_gripper.urdf", (blob) => {
         sawyerRobotFile = URL.createObjectURL(blob);
         robotSwitch.value = "UR5";
         robotSwitch.onchange();
     });
 
     let ur5RobotFile;
-    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/ur5_description/urdf/ur5_gripper.urdf", (blob) => {
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/ur5_description/urdf/ur5_gripper.urdf", (blob) => {
         ur5RobotFile = URL.createObjectURL(blob)
+    });
+
+    let spotArmRobotFile;
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/spot_arm_description/urdf/spot_arm.urdf", (blob) => {
+        spotArmRobotFile = URL.createObjectURL(blob)
     });
 
     createText("Introduction:", "inputs", "h3");
@@ -73,22 +79,26 @@ export function relaxedikDemo() {
 
     let robotSwitch = createSelect("robot", "Robot", "inputs", [
         'Sawyer',
-        'UR5'
+        'UR5',
+        'Spot Arm'
     ]);
 
     robotSwitch.onchange = function() {
         switch (robotSwitch.value) {
             case 'Sawyer':
                 loadRobot(sawyerRobotFile,
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/sawyer_gripper_info.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/sawyer_nn.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/sawyer_description/env_settings.yaml");
+                    "https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/ranged-ik/configs/example_settings/sawyer.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/ur5_description/urdf/sawyer_gripper.urdf");
                 break;
             case 'UR5':
                 loadRobot(ur5RobotFile,
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/info_files/ur5_gripper_info.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/collision_nn_rust/ur5_nn.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/ur5_description/env_settings.yaml");
+                    "https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/ranged-ik/configs/example_settings/ur5.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/ur5_description/urdf/ur5_gripper.urdf");
+                break;
+            case 'Spot Arm':
+                loadRobot(spotArmRobotFile,
+                    "https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/ranged-ik/configs/example_settings/spot_arm.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/spot_arm_description/urdf/spot_arm.urdf");
                 break;
             default:
         }
@@ -101,7 +111,7 @@ export function relaxedikDemo() {
     target_cursor = new T.Mesh( geometry, material );
     scene.add( target_cursor );
 
-    let loadRobot = (robotFile, robot_info_link, robot_nn_config_link, env_settings_link) => {
+    let loadRobot = (robotFile, config_link, urdf_link) => {
         if (window.robot)
             scene.remove(window.robot);
         const manager = new T.LoadingManager();
@@ -112,6 +122,9 @@ export function relaxedikDemo() {
         manager.onLoad = () => {
             scene.add(window.robot);
             window.robot.rotation.x = -Math.PI / 2;
+            if (robotSwitch.value == 'Spot Arm') {
+                window.robot.position.y = 0.5;
+            }
             window.robot.traverse(c => {
                 c.castShadow = true;
                 c.recieveShadow = true;
@@ -135,30 +148,32 @@ export function relaxedikDemo() {
 
                 slider[0].oninput = () => {
                     slider[1].innerHTML = joint[0] + ": " + String(slider[0].value);
-                    window.robot.setJointValue(joint[0], slider[0].value);
+                    let success = window.robot.setJointValue(joint[0], slider[0].value);
+                    if (!success) {
+                        console.log("Failed to set joint value");
+                    }
                 }
                 jointSliders.push(slider);
             })
 
             init().then( () => {
-                load_config(robot_info_link, robot_nn_config_link, env_settings_link);
+                load_config(config_link, urdf_link);
             });
         }
     }
 
-    async function load_config(robot_info_link, robot_nn_config_link, env_settings_link) {
-        let robot_info = yaml.load(await fetch(robot_info_link).then(response => response.text()));
-        let robot_nn_config = yaml.load(await fetch(robot_nn_config_link).then(response => response.text()));
-        let env_settings = yaml.load(await fetch(env_settings_link).then(response => response.text()));
+    async function load_config(config_link, urdf_link) {
+        let configs = yaml.load(await fetch(config_link).then(response => response.text()));
+        let urdf = await fetch(urdf_link).then(response => response.text());
 
-        vis_env_collision(env_settings);
+        // vis_env_collision(env_settings);
 
         // move robot to init config
         let jointArr = Object.entries(window.robot.joints).filter(joint => joint[1]._jointType != "fixed" && joint[1].type != "URDFMimicJoint");
         jointArr.forEach( joint => {
-            let i = robot_info.joint_ordering.indexOf(joint[0]);
+            let i = configs.joint_ordering.indexOf(joint[0]);
             if (i != -1) {
-                joint[1].jointValue[0] =  robot_info.starting_config[i];
+                joint[1].jointValue[0] =  configs.starting_config[i];
                 let slider = jointSliders.find(element => element[0].id.trim() == `${joint[0]}-slider`);
                 slider[0].value = joint[1].jointValue[0];
                 slider[1].innerHTML = joint[0] + ": " + String(slider[0].value);
@@ -166,18 +181,14 @@ export function relaxedikDemo() {
             }
         })    
 
-        let relaxedIK = new RelaxedIK(robot_info, robot_nn_config, env_settings);
+        let relaxedIK = new RelaxedIK(configs, urdf);
         
         window.mouseControl = new MouseControl({
             relaxedIK: relaxedIK,
             jointSliders: jointSliders,
-            robot_info: robot_info,
+            robot_info: configs,
             target_cursor: target_cursor
         });
-
-        setInterval( function(){ 
-            window.mouseControl.step();
-        }, 5);
 
         window.vrControl = new VrControl({
             renderer,
@@ -185,12 +196,26 @@ export function relaxedikDemo() {
             camera,
             relaxedIK
         });
+
+        setInterval( function(){ 
+            window.mouseControl.step();
+        }, 5);
+
     }
 
     function vis_env_collision(env_settings) {
         const material = new T.MeshBasicMaterial( { color: 0xff00ff } );
         material.transparent = true;
         material.opacity = 0.6;
+        if (window.obstacles) {
+            window.obstacles.forEach( (obstacle) => {
+                scene.remove(obstacle);
+            })
+            window.obstacles = [];
+        } 
+        if (env_settings == undefined) {
+            return;
+        }
         if (env_settings.spheres) {
             env_settings.spheres.forEach( (sphere) => {
                 const geometry = new T.SphereGeometry(sphere.scale, 32, 16);
@@ -199,6 +224,7 @@ export function relaxedikDemo() {
                                 "ori": new T.Quaternion()};
                 let pose_three = changeReferenceFrame(pose_ros, T_THREE_to_ROS);
                 mesh.position.copy(pose_three.posi);
+                window.obstacles.push(mesh);
                 scene.add (mesh);
             })
         }
@@ -213,9 +239,11 @@ export function relaxedikDemo() {
                 let pose_three = changeReferenceFrame(pose_ros, T_THREE_to_ROS);
                 mesh.position.copy(pose_three.posi);
                 mesh.quaternion.copy(pose_three.ori);
+                window.obstacles.push(mesh);
                 scene.add (mesh);
             })
         }
+
     }
 
     renderer.setAnimationLoop( function () {
