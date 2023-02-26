@@ -87,17 +87,17 @@ export function relaxedikDemo() {
         switch (robotSwitch.value) {
             case 'Sawyer':
                 loadRobot(sawyerRobotFile,
-                    "https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/ranged-ik/configs/example_settings/sawyer.yaml",
-                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/ur5_description/urdf/sawyer_gripper.urdf");
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/settings/sawyer.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/sawyer_description/urdf/sawyer_gripper.urdf");
                 break;
             case 'UR5':
                 loadRobot(ur5RobotFile,
-                    "https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/ranged-ik/configs/example_settings/ur5.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/settings/ur5.yaml",
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/ur5_description/urdf/ur5_gripper.urdf");
                 break;
             case 'Spot Arm':
                 loadRobot(spotArmRobotFile,
-                    "https://raw.githubusercontent.com/uwgraphics/relaxed_ik_core/ranged-ik/configs/example_settings/spot_arm.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/settings/spot_arm.yaml",
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/spot_arm_description/urdf/spot_arm.urdf");
                 break;
             default:
@@ -173,9 +173,9 @@ export function relaxedikDemo() {
         jointArr.forEach( joint => {
             let i = configs.joint_ordering.indexOf(joint[0]);
             if (i != -1) {
-                joint[1].jointValue[0] =  configs.starting_config[i];
+                // joint[1].jointValue[0] =  configs.starting_config[i];
                 let slider = jointSliders.find(element => element[0].id.trim() == `${joint[0]}-slider`);
-                slider[0].value = joint[1].jointValue[0];
+                slider[0].value = configs.starting_config[i];
                 slider[1].innerHTML = joint[0] + ": " + String(slider[0].value);
                 slider[0].oninput();
             }
