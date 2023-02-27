@@ -193,7 +193,7 @@ export class MouseControl {
     }
 
     reset() {
-        this.relaxedIK.recover_vars([]);
+        this.relaxedIK.reset([]);
         this.ee_goal_rel_ros = {"posi": new T.Vector3(),
                                 "ori": new T.Quaternion().identity()};
     }
