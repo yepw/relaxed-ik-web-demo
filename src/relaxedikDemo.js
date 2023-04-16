@@ -8,7 +8,7 @@ import { createSlider, createCanvas, createText, createToggleSwitch, createBr, c
 import { MouseControl } from './mouseControl.js';
 import { VrControl } from './vrControl.js'
 
-import init, {RelaxedIK} from "../relaxed_ik_core/pkg/relaxed_ik_core.js";
+import init, {RelaxedIK} from "../relaxed_ik_core/pkg/relaxed_ik_lib.js";
 import * as yaml from 'js-yaml';
 import { getCurrEEpose, changeReferenceFrame,
         T_ROS_to_THREE, T_THREE_to_ROS, } from './utils';
@@ -49,6 +49,11 @@ export function relaxedikDemo() {
     getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/spot_arm_description/urdf/spot_arm.urdf", (blob) => {
         spotArmRobotFile = URL.createObjectURL(blob)
     });
+    
+    let mobileSpotArmRobotFile;
+    getURDFFromURL("https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/mobile_spot_arm_description/urdf/mobile_spot_arm.urdf", (blob) => {
+        mobileSpotArmRobotFile = URL.createObjectURL(blob)
+    });
 
     createText("Introduction:", "inputs", "h3");
     createText("This is an online demo of Relaxed-IK.", "inputs", "p");
@@ -80,7 +85,8 @@ export function relaxedikDemo() {
     let robotSwitch = createSelect("robot", "Robot", "inputs", [
         'Sawyer',
         'UR5',
-        'Spot Arm'
+        'Spot Arm',
+        'Mobile Spot Arm'
     ]);
 
     robotSwitch.onchange = function() {
@@ -99,6 +105,11 @@ export function relaxedikDemo() {
                 loadRobot(spotArmRobotFile,
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/settings/spot_arm.yaml",
                     "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/spot_arm_description/urdf/spot_arm.urdf");
+                break;
+            case 'Mobile Spot Arm':
+                loadRobot(mobileSpotArmRobotFile,
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/settings/mobile_spot_arm.yaml",
+                    "https://raw.githubusercontent.com/yepw/robot_configs/master/relaxed_ik_web_demo/mobile_spot_arm_description/urdf/mobile_spot_arm.urdf");
                 break;
             default:
         }
